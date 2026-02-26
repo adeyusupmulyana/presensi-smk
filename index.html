@@ -31,7 +31,7 @@
             transition: background 0.5s ease, color 0.5s ease;
         }
         
-        /* Background Effects */
+        /* Background & Noise Effects */
         .bg-mesh {
             position: fixed; inset: 0;
             background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(249, 115, 22, 0.12), transparent);
@@ -47,8 +47,6 @@
         @keyframes float { 0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } }
 
         /* ==================== TRANSITIONS SYSTEM ==================== */
-        
-        /* 1. View Transition (Fade & Scale) */
         .view {
             display: none;
             opacity: 0;
@@ -59,64 +57,33 @@
             display: block;
             animation: viewIn 0.5s ease forwards;
         }
-        .view.exit {
-            animation: viewOut 0.3s ease forwards;
-        }
+        .view.exit { animation: viewOut 0.3s ease forwards; }
         @keyframes viewIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
         @keyframes viewOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.02); } }
 
-        /* 2. Step Transition (Slide Directional) */
         .step {
             display: none;
             opacity: 0;
             position: relative;
         }
-        .step.active {
-            display: block;
-            animation: stepSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .step.exit-left {
-            display: block;
-            animation: stepSlideOutLeft 0.3s ease forwards;
-        }
-        .step.exit-right {
-            display: block;
-            animation: stepSlideOutRight 0.3s ease forwards;
-        }
-
-        @keyframes stepSlideIn {
-            from { opacity: 0; transform: translateX(40px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes stepSlideOutLeft {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(-40px); }
-        }
-        /* Untuk Prev Step */
+        .step.active { display: block; animation: stepSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .step.exit-left { display: block; animation: stepSlideOutLeft 0.3s ease forwards; }
+        .step.exit-right { display: block; animation: stepSlideOutRight 0.3s ease forwards; }
         .step.slide-back.active { animation-name: stepSlideInBack; }
-        .step.exit-right { animation-name: stepSlideOutRight; }
-        
-        @keyframes stepSlideInBack {
-            from { opacity: 0; transform: translateX(-40px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes stepSlideOutRight {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(40px); }
-        }
 
-        /* 3. Element Animations */
+        @keyframes stepSlideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes stepSlideOutLeft { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-40px); } }
+        @keyframes stepSlideInBack { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes stepSlideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
         .card {
             background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
+            border-radius: 20px; backdrop-filter: blur(10px);
             transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.5s;
         }
         
-        /* Button Ripple Effect */
         .btn-primary, .btn-secondary, .btn-danger {
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
             font-weight: 600; padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -124,16 +91,13 @@
         .btn-primary:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 30px var(--accent-glow); }
         
         .ripple {
-            position: absolute;
-            border-radius: 50%;
+            position: absolute; border-radius: 50%;
             background: rgba(255, 255, 255, 0.4);
-            transform: scale(0);
-            animation: ripple 0.6s linear;
+            transform: scale(0); animation: ripple 0.6s linear;
             pointer-events: none;
         }
         @keyframes ripple { to { transform: scale(4); opacity: 0; } }
 
-        /* Input Field Glow */
         .input-field { 
             width: 100%; background: var(--bg-secondary); border: 2px solid var(--border);
             border-radius: 12px; padding: 12px 16px; color: var(--fg-primary); font-size: 14px;
@@ -141,7 +105,6 @@
         }
         .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
 
-        /* Sidebar & Other Styles */
         .hidden { display: none !important; }
         .sidebar {
             width: 260px; background: var(--bg-card); border-right: 1px solid var(--border);
@@ -157,7 +120,6 @@
         .sidebar-item.active { background: rgba(249, 115, 22, 0.15); color: var(--accent); border-left-color: var(--accent); }
         .main-content { margin-left: 260px; min-height: 100vh; padding: 24px; transition: margin-left 0.3s ease; }
 
-        /* Tables & Badges */
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th { text-align: left; padding: 14px 16px; background: var(--bg-secondary); color: var(--fg-secondary); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border); }
         .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
@@ -167,7 +129,6 @@
         .badge-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
         .badge-alpha { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
-        /* Status & Modals */
         .status-option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 14px; }
         .status-option:hover { border-color: var(--fg-muted); }
         .status-option.selected { border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
@@ -175,15 +136,10 @@
         .modal-overlay.active { display: flex; opacity: 1; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; transform: scale(0.9); transition: transform 0.3s ease; }
         .modal-overlay.active .modal-content { transform: scale(1); }
-
-        /* Progress Bar */
         .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* Theme Toggle */
         .theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 20; width: 50px; height: 50px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; }
         .theme-toggle:hover { transform: scale(1.1) rotate(15deg); border-color: var(--accent); }
-
         @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); z-index: 60; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } }
     </style>
 </head>
@@ -445,19 +401,41 @@
         </main>
     </div>
 
-    <!-- MODALS (Structure unchanged for brevity) -->
+    <!-- MODALS -->
     <div class="modal-overlay" id="addSiswaModal"><div class="modal-content"><div class="p-5 border-b"><h3>Tambah Siswa</h3></div><div class="p-5 space-y-4"><input type="text" id="addSiswaId" class="input-field" placeholder="ID"><input type="text" id="addSiswaNama" class="input-field" placeholder="Nama"><select id="addSiswaKelas" class="input-field"></select></div><div class="p-5 border-t flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('addSiswaModal')">Batal</button><button class="btn-primary flex-1" onclick="saveNewSiswa()">Simpan</button></div></div></div>
     <div class="modal-overlay" id="addKelasModal"><div class="modal-content"><div class="p-5 border-b"><h3>Tambah Kelas</h3></div><div class="p-5"><input type="text" id="addKelasNama" class="input-field" placeholder="Nama Kelas (XII TKJ 1)"></div><div class="p-5 border-t flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('addKelasModal')">Batal</button><button class="btn-primary flex-1" onclick="saveNewKelas()">Simpan</button></div></div></div>
     <div class="modal-overlay" id="deleteModal"><div class="modal-content"><div class="p-5 text-center"><h3 class="font-semibold mb-4">Hapus Data?</h3><div class="flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('deleteModal')">Batal</button><button class="btn-danger flex-1" id="confirmDeleteBtn">Hapus</button></div></div></div></div>
 
     <script>
         // ==========================================
-        // CONFIG
+        // CONFIG & API
         // ==========================================
         const API_URL = 'https://script.google.com/macros/s/AKfycbxPLAL8L8KykBpqNLBnuAPfpsFDQ5rekNJOdccA3ZrFJsUins0SKW8b2vsCwDrA2OTAwA/exec'; 
 
-        // DATA
-        let databaseSiswa = JSON.parse(localStorage.getItem('databaseSiswa')) || { "XII RPL 1": [{id:"001", nama:"Ahmad"}], "XII TKJ 1": [{id:"002", nama:"Budi"}] };
+        // ==========================================
+        // DB VERSIONING (SOLUTION FOR MOBILE CACHE)
+        // Jika Anda mengubah data default di bawah, ubah angka versi ini (misal jadi 3, 4, dst)
+        // ==========================================
+        const DB_VERSION = 2; 
+        
+        // Check Version Logic
+        const currentVer = localStorage.getItem('db_version');
+        if (currentVer != DB_VERSION) {
+            console.log("New DB Version detected. Clearing old data...");
+            localStorage.clear();
+            localStorage.setItem('db_version', DB_VERSION);
+        }
+
+        // DEFAULT DATA (Diubah menjadi XI TKJ 2 sesuai request)
+        let databaseSiswa = JSON.parse(localStorage.getItem('databaseSiswa')) || {
+            "XI TKJ 2": [
+                {id: "001", nama: "Ahmad Fauzi"},
+                {id: "002", nama: "Budi Santoso"},
+                {id: "003", nama: "Citra Dewi"}
+            ]
+        };
+        // ==========================================
+
         let presensiData = JSON.parse(localStorage.getItem('presensiData')) || [];
         let appSettings = JSON.parse(localStorage.getItem('appSettings')) || { theme: 'dark' };
         let formData = {}, currentStep=1, cameraStream=null, isAnimating=false;
@@ -467,7 +445,7 @@
             createParticles();
             applyTheme(appSettings.theme);
             document.getElementById('loginMode').onchange = (e) => document.getElementById('adminLoginFields').classList.toggle('hidden', e.target.value === 'siswa');
-            initRipple(); // Initialize ripple effect
+            initRipple();
         });
         function createParticles() { for(let i=0; i<15; i++) { let p=document.createElement('div'); p.className='particle'; p.style.left=Math.random()*100+'%'; p.style.animationDelay=Math.random()*5+'s'; document.getElementById('particles').appendChild(p); } }
 
@@ -492,7 +470,7 @@
         function toggleTheme() { appSettings.theme = appSettings.theme === 'light' ? 'dark' : 'light'; applyTheme(appSettings.theme); localStorage.setItem('appSettings', JSON.stringify(appSettings)); }
         function applyTheme(t) { if(t==='light') { document.body.setAttribute('data-theme', 'light'); document.getElementById('iconSun').classList.add('hidden'); document.getElementById('iconMoon').classList.remove('hidden'); } else { document.body.removeAttribute('data-theme'); document.getElementById('iconSun').classList.remove('hidden'); document.getElementById('iconMoon').classList.add('hidden'); } }
 
-        // AUTH & VIEW SWITCHING (WITH TRANSITIONS)
+        // AUTH & VIEW SWITCHING
         function handleLogin() {
             const mode = document.getElementById('loginMode').value;
             if(mode === 'admin') {
@@ -503,34 +481,20 @@
                 switchView('siswaView');
             }
         }
-        
         function logout() { switchView('loginView'); }
-
         function switchView(targetId) {
             const current = document.querySelector('.view.active');
             const next = document.getElementById(targetId);
-            
-            // Add exit animation
             current.classList.add('exit');
             current.classList.remove('active');
-            
-            // Wait for exit, then enter
             setTimeout(() => {
                 current.classList.remove('exit');
                 next.classList.add('active');
-                
-                if(targetId === 'adminView') {
-                    document.getElementById('themeTogglePublic').style.display = 'none'; 
-                    initAdmin();
-                } else if(targetId === 'siswaView') {
-                    document.getElementById('themeTogglePublic').style.display = 'flex'; 
-                    initSiswa();
-                } else {
-                    document.getElementById('themeTogglePublic').style.display = 'flex';
-                }
+                if(targetId === 'adminView') { document.getElementById('themeTogglePublic').style.display = 'none'; initAdmin(); }
+                else if(targetId === 'siswaView') { document.getElementById('themeTogglePublic').style.display = 'flex'; initSiswa(); }
+                else { document.getElementById('themeTogglePublic').style.display = 'flex'; }
             }, 300);
         }
-
         function showView(id) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
         // SISWA LOGIC
@@ -563,52 +527,33 @@
         async function startCamera() { try { cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}); let video = document.getElementById('cameraVideo'); video.srcObject = cameraStream; video.style.display = 'block'; document.getElementById('cameraOverlay').style.display = 'none'; document.getElementById('btnCapture').disabled = false; } catch(e) { alert('Kamera error'); } }
         function capturePhoto() { let video = document.getElementById('cameraVideo'); let photo = document.getElementById('capturedPhoto'); let canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); photo.src = canvas.toDataURL('image/jpeg'); photo.style.display = 'block'; video.style.display = 'none'; formData.foto = photo.src; if(cameraStream) cameraStream.getTracks().forEach(t => t.stop()); document.getElementById('btnStep5a').disabled = false; }
         
-        // STEP NAVIGATION (WITH SLIDE TRANSITIONS)
+        // STEP NAVIGATION
         function nextStep(from) {
-            if(isAnimating) return;
-            isAnimating = true;
-
+            if(isAnimating) return; isAnimating = true;
             const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7'];
             let nextId;
             if(from===4) nextId = formData.status === 'hadir' ? 'step5a' : 'step5b';
             else if(from===5) { showRecap(); nextId = 'step6'; }
             else nextId = steps[from];
-
-            // Animate Out (To Left)
             document.getElementById(steps[from-1]).classList.add('exit-left');
-            
             setTimeout(() => {
-                // Hide old, show new
                 document.getElementById(steps[from-1]).classList.remove('active', 'exit-left');
                 document.getElementById(nextId).classList.add('active');
-                
                 if(from===2) document.getElementById('selectedKelasLabel').textContent = formData.kelas;
-                currentStep = from+1; 
-                updateProgress();
-                isAnimating = false;
+                currentStep = from+1; updateProgress(); isAnimating = false;
             }, 300);
         }
-        
         function prevStep(to) { 
-            if(isAnimating) return;
-            isAnimating = true;
-
+            if(isAnimating) return; isAnimating = true;
             const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7'];
             const currentStepIndex = currentStep - 1;
-
-            // Animate Out (To Right)
             document.getElementById(steps[currentStepIndex]).classList.add('exit-right');
-            
             setTimeout(() => {
-                // Hide old, show new with back-slide class
                 document.getElementById(steps[currentStepIndex]).classList.remove('active', 'exit-right');
                 const nextEl = document.getElementById('step'+to);
-                nextEl.classList.add('slide-back'); // Add class to trigger reverse animation
+                nextEl.classList.add('slide-back');
                 nextEl.classList.add('active');
-                
-                currentStep=to; 
-                updateProgress();
-                isAnimating = false;
+                currentStep=to; updateProgress(); isAnimating = false;
             }, 300);
         }
         
@@ -620,48 +565,16 @@
         function submitPresensi() {
             let exist = presensiData.find(p => p.siswaId === formData.siswa.id && p.tanggal === formData.tanggal);
             if(exist) { alert('Maaf, sudah presensi hari ini!'); return; }
-
             const id = 'PRSN-'+Date.now().toString(36).toUpperCase();
             document.getElementById('presensiId').textContent = id;
-
-            const dataToSend = {
-                id: id,
-                tanggal: formData.tanggal,
-                waktu: formData.waktu,
-                nama: formData.siswa.nama,
-                kelas: formData.kelas,
-                status: formData.status,
-                lokasi: formData.lokasi,
-                keterangan: document.getElementById('inputKeterangan').value
-            };
-
-            presensiData.push({
-                id, siswaId: formData.siswa.id, siswaNama: formData.siswa.nama, kelas: formData.kelas,
-                tanggal: formData.tanggal, waktu: formData.waktu, status: formData.status,
-                lokasi: formData.lokasi, keterangan: dataToSend.keterangan, timestamp: new Date().toISOString()
-            });
+            const dataToSend = { id: id, tanggal: formData.tanggal, waktu: formData.waktu, nama: formData.siswa.nama, kelas: formData.kelas, status: formData.status, lokasi: formData.lokasi, keterangan: document.getElementById('inputKeterangan').value };
+            presensiData.push({ id, siswaId: formData.siswa.id, siswaNama: formData.siswa.nama, kelas: formData.kelas, tanggal: formData.tanggal, waktu: formData.waktu, status: formData.status, lokasi: formData.lokasi, keterangan: dataToSend.keterangan, timestamp: new Date().toISOString() });
             localStorage.setItem('presensiData', JSON.stringify(presensiData));
-
-            if(API_URL && API_URL !== 'https://script.google.com/macros/s/AKfycbxPLAL8L8KykBpqNLBnuAPfpsFDQ5rekNJOdccA3ZrFJsUins0SKW8b2vsCwDrA2OTAwA/exec') {
-                fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSend)
-                })
-                .then(() => {
-                    console.log("Data terkirim ke Google Sheets");
-                    nextStep(6);
-                })
-                .catch(err => {
-                    console.error('Error:', err);
-                    alert("Gagal mengirim ke server, tapi data disimpan lokal.");
-                    nextStep(6);
-                });
-            } else {
-                alert("URL API belum diatur. Data hanya disimpan lokal.");
-                nextStep(6);
-            }
+            if(API_URL && API_URL !== 'MASUKKAN_URL_GOOGLE_SCRIPT_ANDA_DISINI') {
+                fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSend) })
+                .then(() => { console.log("Data terkirim"); nextStep(6); })
+                .catch(err => { console.error('Error:', err); alert("Gagal kirim server, simpan lokal."); nextStep(6); });
+            } else { alert("URL API belum diatur."); nextStep(6); }
         }
 
         // ADMIN LOGIC
@@ -718,7 +631,6 @@
             openModal('deleteModal');
         }
 
-        // KELAS LOGIC
         function loadKelasData() {
             document.getElementById('kelasTableBody').innerHTML = Object.keys(databaseSiswa).map(k => `<tr><td>${k}</td><td>${databaseSiswa[k].length}</td><td><button class="btn-danger btn-sm" onclick="deleteKelas('${k}')">Hapus</button></td></tr>`).join('');
         }
@@ -739,10 +651,8 @@
             openModal('deleteModal');
         }
 
-        // IMPORT EXCEL FIX
         function handleImportFile(e) {
-            let file = e.target.files[0];
-            if(!file) return;
+            let file = e.target.files[0]; if(!file) return;
             let reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -750,7 +660,6 @@
                     let workbook = XLSX.read(data, {type: 'array'});
                     let sheet = workbook.Sheets[workbook.SheetNames[0]];
                     let json = XLSX.utils.sheet_to_json(sheet, {header:1});
-                    
                     json.slice(1).forEach(row => {
                         let id = String(row[0] || '').trim();
                         let nama = String(row[1] || '').trim();
@@ -768,12 +677,10 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // EXPORT
         function exportData(type) {
             let dari = document.getElementById('exportDari').value;
             let sampai = document.getElementById('exportSampai').value;
             let data = presensiData.filter(p => (!dari || p.tanggal >= dari) && (!sampai || p.tanggal <= sampai));
-            
             if(type === 'pdf') {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
@@ -787,15 +694,11 @@
             }
         }
         function sendWhatsApp() {
-            let num = prompt("Masukkan nomor WA (628...)");
-            if(!num) return;
+            let num = prompt("Masukkan nomor WA (628...)"); if(!num) return;
             exportData('pdf');
-            setTimeout(() => {
-                window.open(`https://wa.me/${num}?text=Lampiran%20Rekap%20Presensi`, '_blank');
-            }, 1000);
+            setTimeout(() => { window.open(`https://wa.me/${num}?text=Lampiran%20Rekap%20Presensi`, '_blank'); }, 1000);
         }
 
-        // UTILS
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     </script>
