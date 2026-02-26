@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presensi Digital - SMK Handayani Banjaran</title>
+    <!-- Library CSS & JS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0f1a; --bg-secondary: #111827; --bg-card: #1a2332;
+            --fg-primary: #f1f5f9; --fg-secondary: #94a3b8; --fg-muted: #64748b;
+            --accent: #f97316; --accent-glow: rgba(249, 115, 22, 0.3);
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --alpha: #6b7280;
+            --border: #2d3a4f;
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --fg-primary: #0f172a; --fg-secondary: #475569; --fg-muted: #94a3b8;
+            --border: #e2e8f0; --accent-glow: rgba(249, 115, 22, 0.2);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary); color: var(--fg-primary);
+            min-height: 100vh; overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        .bg-mesh {
+            position: fixed; inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(249, 115, 22, 0.12), transparent);
+            pointer-events: none; z-index: 0;
+        }
+        .noise-overlay {
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 1;
+        }
+        .hidden { display: none !important; }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px; background: var(--bg-card); border-right: 1px solid var(--border);
+            height: 100vh; position: fixed; left: 0; top: 0; z-index: 50;
+            transition: transform 0.3s ease; overflow-y: auto;
+        }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+            color: var(--fg-secondary); cursor: pointer; transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-item:hover { background: rgba(249, 115, 22, 0.1); color: var(--fg-primary); }
+        .sidebar-item.active { background: rgba(249, 115, 22, 0.15); color: var(--accent); border-left-color: var(--accent); }
+
+        .main-content { margin-left: 260px; min-height: 100vh; padding: 24px; transition: margin-left 0.3s ease; }
+        
+        /* Components */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), #ea580c); color: white; font-weight: 600; padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-secondary { background: var(--bg-secondary); color: var(--fg-primary); font-weight: 500; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; }
+        .btn-danger { background: var(--danger); color: white; font-weight: 600; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; }
+        .input-field { width: 100%; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--fg-primary); font-size: 14px; transition: all 0.2s ease; }
+        .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+        
+        /* Table */
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { text-align: left; padding: 14px 16px; background: var(--bg-secondary); color: var(--fg-secondary); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        
+        /* Badges */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-alpha { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+        /* Steps */
+        .step { display: none; opacity: 0; transform: translateY(30px); }
+        .step.active { display: block; animation: stepIn 0.5s ease forwards; }
+        @keyframes stepIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.5s ease; }
+
+        /* Status Option */
+        .status-option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 14px; }
+        .status-option:hover { border-color: var(--fg-muted); }
+        .status-option.selected { border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        /* Theme Toggle */
+        .theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 20; width: 50px; height: 50px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; }
+        .theme-toggle:hover { transform: scale(1.1); border-color: var(--accent); }
+
+        /* Particles */
+        .floating-particles { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+        .particle { position: absolute; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; opacity: 0.3; animation: float 15s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(100vh); opacity: 0; } 10% { opacity: 0.3; } }
+
+        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); z-index: 60; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"></div>
+    <div class="noise-overlay"></div>
+    <div class="floating-particles" id="particles"></div>
+
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeTogglePublic">
+        <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" class="hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    <!-- LOGIN VIEW -->
+    <div class="view active" id="loginView">
+        <main class="min-h-screen flex items-center justify-center p-4 relative z-10">
+            <div class="w-full max-w-md">
+                <div class="card p-8">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4" style="background: linear-gradient(135deg, var(--accent), #ea580c)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                        </div>
+                        <h1 class="font-display text-2xl font-bold mb-2" id="loginTitle">SMK Handayani Banjaran</h1>
+                        <p style="color: var(--fg-secondary)">Sistem Presensi Digital</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Mode Akses</label>
+                            <select class="input-field" id="loginMode">
+                                <option value="siswa">Siswa - Isi Presensi</option>
+                                <option value="admin">Admin - Kelola Data</option>
+                            </select>
+                        </div>
+                        <div id="adminLoginFields" class="space-y-4 hidden">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Username</label>
+                                <input type="text" class="input-field" id="adminUsername" placeholder="Masukkan username">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Password</label>
+                                <input type="password" class="input-field" id="adminPassword" placeholder="Masukkan password">
+                            </div>
+                        </div>
+                        <button class="btn-primary w-full" onclick="handleLogin()">Masuk</button>
+                    </div>
+                    <div class="mt-6 p-4 rounded-lg" style="background: var(--bg-secondary)">
+                        <p class="text-xs" style="color: var(--fg-muted)"><strong>Demo Admin:</strong><br>Username: admin<br>Password: admin123</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SISWA VIEW -->
+    <div class="view" id="siswaView">
+        <main class="min-h-screen flex items-center justify-center p-4 relative z-10">
+            <div class="w-full max-w-lg">
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-medium" style="color: var(--fg-secondary)">Langkah <span id="currentStep">1</span> dari 6</span>
+                        <span class="text-sm font-semibold" style="color: var(--accent)" id="progressPercent">17%</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 17%"></div></div>
+                </div>
+
+                <!-- Step 1 -->
+                <div class="step active" id="step1">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8">
+                            <h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Pilih Kelas</h1>
+                        </div>
+                        <div class="space-y-4">
+                            <select class="input-field" id="selectKelas"><option value="">-- Pilih Kelas --</option></select>
+                            <button class="btn-primary w-full" onclick="nextStep(1)" id="btnStep1" disabled>Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step" id="step2">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8">
+                            <h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Pilih Siswa</h1>
+                            <p style="color: var(--fg-secondary)">Kelas: <span id="selectedKelasLabel" class="font-semibold" style="color: var(--accent)"></span></p>
+                        </div>
+                        <div class="space-y-4">
+                            <select class="input-field" id="selectSiswa"><option value="">-- Pilih Siswa --</option></select>
+                            <div class="flex gap-3">
+                                <button class="btn-secondary flex-1" onclick="prevStep(1)">Kembali</button>
+                                <button class="btn-primary flex-1" onclick="nextStep(2)" id="btnStep2" disabled>Lanjutkan</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step" id="step3">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8">
+                            <h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Konfirmasi Waktu</h1>
+                        </div>
+                        <div class="space-y-4 mb-6">
+                            <div><label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Tanggal</label><input type="date" class="input-field" id="inputTanggal" readonly></div>
+                            <div><label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Waktu</label><input type="time" class="input-field" id="inputWaktu" readonly></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(2)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(3)">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="step" id="step4">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Status Kehadiran</h1></div>
+                        <div class="space-y-3 mb-6">
+                            <div class="status-option" onclick="selectStatus('hadir')" data-status="hadir"><div class="status-icon" style="background: rgba(16, 185, 129, 0.2)"><svg width="22" height="22" stroke="#10b981" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5"/></svg></div><div><div class="font-semibold">Hadir</div></div></div>
+                            <div class="status-option" onclick="selectStatus('izin')" data-status="izin"><div class="status-icon" style="background: rgba(245, 158, 11, 0.2)"><svg width="22" height="22" stroke="#f59e0b" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></div><div><div class="font-semibold">Izin</div></div></div>
+                            <div class="status-option" onclick="selectStatus('sakit')" data-status="sakit"><div class="status-icon" style="background: rgba(239, 68, 68, 0.2)"><svg width="22" height="22" stroke="#ef4444" viewBox="0 0 24 24" fill="none"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="3"/></svg></div><div><div class="font-semibold">Sakit</div></div></div>
+                            <div class="status-option" onclick="selectStatus('alpha')" data-status="alpha"><div class="status-icon" style="background: rgba(107, 114, 128, 0.2)"><svg width="22" height="22" stroke="#6b7280" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg></div><div><div class="font-semibold">Alpha</div></div></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(3)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(4)" id="btnStep4" disabled>Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5a (Hadir) -->
+                <div class="step" id="step5a">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Lokasi & Foto</h1></div>
+                        <div class="space-y-4 mb-6">
+                            <div><label class="block text-sm mb-2" style="color: var(--fg-secondary)">Lokasi</label><div class="input-field flex items-center gap-3" style="background: var(--bg-card)"><span id="locationText" style="color: var(--fg-secondary)">Mendapatkan lokasi...</span></div></div>
+                            <div>
+                                <label class="block text-sm mb-2" style="color: var(--fg-secondary)">Foto Selfie</label>
+                                <div style="background: var(--bg-secondary); border-radius:12px; overflow:hidden; position:relative; aspect-ratio: 4/3;">
+                                    <video id="cameraVideo" autoplay playsinline style="display: none; width:100%; height:100%; object-fit:cover;"></video>
+                                    <img id="capturedPhoto" style="display: none; width:100%; height:100%; object-fit:cover;">
+                                    <div id="cameraOverlay" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3);"><p style="color:white">Klik Buka Kamera</p></div>
+                                </div>
+                                <div class="flex gap-3 mt-4">
+                                    <button class="btn-secondary flex-1" onclick="startCamera()" id="btnStartCamera">Buka Kamera</button>
+                                    <button class="btn-primary flex-1" onclick="capturePhoto()" id="btnCapture" disabled>Ambil Foto</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(4)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(5)" id="btnStep5a" disabled>Selesai</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5b (Non-Hadir) -->
+                <div class="step" id="step5b">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Keterangan</h1></div>
+                        <div class="space-y-4 mb-6">
+                            <div><label class="block text-sm mb-2" style="color: var(--fg-secondary)">Keterangan</label><textarea class="input-field" id="inputKeterangan" rows="3" placeholder="Tuliskan alasan..."></textarea></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(4)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(5)">Selesai</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6 -->
+                <div class="step" id="step6">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Rekap Presensi</h1></div>
+                        <div class="mb-6" id="recapContainer"></div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="editData()">Ubah Data</button>
+                            <button class="btn-primary flex-1" onclick="submitPresensi()">Kirim Presensi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 7 -->
+                <div class="step" id="step7">
+                    <div class="card p-6 sm:p-8 text-center">
+                        <div class="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center" style="background: linear-gradient(135deg, var(--success), #059669)"><svg width="48" height="48" stroke="white" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5"/></svg></div>
+                        <h1 class="font-display text-2xl font-bold mb-2">Presensi Berhasil</h1>
+                        <p style="color: var(--fg-secondary)" class="mb-6">ID: <span id="presensiId"></span></p>
+                        <button class="btn-primary w-full" onclick="resetForm()">Presensi Baru</button>
+                        <button class="btn-secondary w-full mt-3" onclick="logout()">Keluar</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div class="view" id="adminView">
+        <aside class="sidebar" id="adminSidebar">
+            <div class="p-5 border-b" style="border-color: var(--border)"><h2 class="font-bold" id="sidebarTitle">Admin Panel</h2></div>
+            <nav class="py-4">
+                <div class="sidebar-item active" onclick="showAdminSection('dashboard')">Dashboard</div>
+                <div class="sidebar-item" onclick="showAdminSection('presensi')">Data Presensi</div>
+                <div class="sidebar-item" onclick="showAdminSection('siswa')">Data Siswa</div>
+                <div class="sidebar-item" onclick="showAdminSection('kelas')">Data Kelas</div>
+                <div class="sidebar-item" onclick="showAdminSection('export')">Export Data</div>
+            </nav>
+            <div class="absolute bottom-0 left-0 right-0 p-4"><button class="btn-secondary w-full" onclick="logout()">Keluar</button></div>
+        </aside>
+
+        <main class="main-content">
+            <h1 class="font-display text-xl font-bold mb-6" id="adminSectionTitle">Dashboard</h1>
+
+            <section id="sectionDashboard" class="admin-section">
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    <div class="card p-5"><div class="text-2xl font-bold" id="statTotal">0</div><div class="text-sm" style="color: var(--fg-secondary)">Total</div></div>
+                    <div class="card p-5"><div class="text-2xl font-bold" style="color: var(--success)" id="statHadir">0</div><div class="text-sm" style="color: var(--fg-secondary)">Hadir</div></div>
+                    <div class="card p-5"><div class="text-2xl font-bold" style="color: var(--warning)" id="statIzin">0</div><div class="text-sm" style="color: var(--fg-secondary)">Izin</div></div>
+                    <div class="card p-5"><div class="text-2xl font-bold" style="color: var(--danger)" id="statSakit">0</div><div class="text-sm" style="color: var(--fg-secondary)">Sakit</div></div>
+                    <div class="card p-5"><div class="text-2xl font-bold" style="color: var(--alpha)" id="statAlpha">0</div><div class="text-sm" style="color: var(--fg-secondary)">Alpha</div></div>
+                </div>
+                <div class="card p-5"><h3 class="font-semibold mb-4">Aktivitas Terbaru</h3><div class="overflow-x-auto"><table class="data-table"><thead><tr><th>Waktu</th><th>Nama</th><th>Status</th></tr></thead><tbody id="recentActivityBody"></tbody></table></div></div>
+            </section>
+
+            <section id="sectionPresensi" class="admin-section hidden">
+                <div class="card p-5">
+                    <div class="flex gap-3 mb-4"><input type="date" class="input-field" id="filterTanggal" oninput="loadPresensiData()"><select class="input-field" id="filterStatus" onchange="loadPresensiData()"><option value="">Semua Status</option><option value="hadir">Hadir</option><option value="izin">Izin</option><option value="sakit">Sakit</option><option value="alpha">Alpha</option></select></div>
+                    <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>ID</th><th>Tanggal</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="presensiTableBody"></tbody></table></div>
+                </div>
+            </section>
+
+            <section id="sectionSiswa" class="admin-section hidden">
+                <div class="card p-5">
+                    <div class="flex justify-between mb-4">
+                        <input type="text" class="input-field" style="width:200px" placeholder="Cari..." id="searchSiswa" oninput="loadSiswaData()">
+                        <div class="flex gap-2">
+                            <button class="btn-secondary" onclick="document.getElementById('importFile').click()">Import Excel</button>
+                            <input type="file" id="importFile" class="hidden" accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)">
+                            <button class="btn-primary" onclick="openModal('addSiswaModal')">+ Tambah</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>ID</th><th>Nama</th><th>Kelas</th><th>Aksi</th></tr></thead><tbody id="siswaTableBody"></tbody></table></div>
+                </div>
+            </section>
+
+            <section id="sectionKelas" class="admin-section hidden">
+                <div class="card p-5">
+                    <div class="flex justify-between mb-4"><h3 class="font-semibold">Daftar Kelas</h3><button class="btn-primary" onclick="openModal('addKelasModal')">+ Tambah Kelas</button></div>
+                    <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>Nama Kelas</th><th>Jumlah Siswa</th><th>Aksi</th></tr></thead><tbody id="kelasTableBody"></tbody></table></div>
+                </div>
+            </section>
+
+            <section id="sectionExport" class="admin-section hidden">
+                <div class="card p-5">
+                    <h3 class="font-semibold mb-4">Export & WhatsApp</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <input type="date" class="input-field" id="exportDari">
+                        <input type="date" class="input-field" id="exportSampai">
+                    </div>
+                    <div class="flex gap-3">
+                        <button class="btn-primary" onclick="exportData('csv')">Export CSV</button>
+                        <button class="btn-primary" onclick="exportData('pdf')">Export PDF</button>
+                        <button class="btn-secondary" onclick="sendWhatsApp()">Kirim WA (PDF)</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="addSiswaModal"><div class="modal-content"><div class="p-5 border-b"><h3>Tambah Siswa</h3></div><div class="p-5 space-y-4"><input type="text" id="addSiswaId" class="input-field" placeholder="ID"><input type="text" id="addSiswaNama" class="input-field" placeholder="Nama"><select id="addSiswaKelas" class="input-field"></select></div><div class="p-5 border-t flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('addSiswaModal')">Batal</button><button class="btn-primary flex-1" onclick="saveNewSiswa()">Simpan</button></div></div></div>
+    <div class="modal-overlay" id="addKelasModal"><div class="modal-content"><div class="p-5 border-b"><h3>Tambah Kelas</h3></div><div class="p-5"><input type="text" id="addKelasNama" class="input-field" placeholder="Nama Kelas (XII TKJ 1)"></div><div class="p-5 border-t flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('addKelasModal')">Batal</button><button class="btn-primary flex-1" onclick="saveNewKelas()">Simpan</button></div></div></div>
+    <div class="modal-overlay" id="deleteModal"><div class="modal-content"><div class="p-5 text-center"><h3 class="font-semibold mb-4">Hapus Data?</h3><div class="flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('deleteModal')">Batal</button><button class="btn-danger flex-1" id="confirmDeleteBtn">Hapus</button></div></div></div></div>
+
+    <script>
+        // ==========================================
+        // PENTING: GANTI URL DI BAWAH INI DENGAN URL GOOGLE SCRIPT ANDA
+        // Contoh: https://script.google.com/macros/s/XXXXXX/exec
+        // ==========================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxPLAL8L8KykBpqNLBnuAPfpsFDQ5rekNJOdccA3ZrFJsUins0SKW8b2vsCwDrA2OTAwA/exec'; 
+        // ==========================================
+
+        // DATA
+        let databaseSiswa = JSON.parse(localStorage.getItem('databaseSiswa')) || { "XII RPL 1": [{id:"001", nama:"Ahmad"}], "XII TKJ 1": [{id:"002", nama:"Budi"}] };
+        let presensiData = JSON.parse(localStorage.getItem('presensiData')) || [];
+        let appSettings = JSON.parse(localStorage.getItem('appSettings')) || { theme: 'dark' };
+        let formData = {}, currentStep=1, cameraStream=null;
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            applyTheme(appSettings.theme);
+            document.getElementById('loginMode').onchange = (e) => document.getElementById('adminLoginFields').classList.toggle('hidden', e.target.value === 'siswa');
+        });
+        function createParticles() { for(let i=0; i<15; i++) { let p=document.createElement('div'); p.className='particle'; p.style.left=Math.random()*100+'%'; p.style.animationDelay=Math.random()*5+'s'; document.getElementById('particles').appendChild(p); } }
+
+        // THEME
+        function toggleTheme() { appSettings.theme = appSettings.theme === 'light' ? 'dark' : 'light'; applyTheme(appSettings.theme); localStorage.setItem('appSettings', JSON.stringify(appSettings)); }
+        function applyTheme(t) { if(t==='light') { document.body.setAttribute('data-theme', 'light'); document.getElementById('iconSun').classList.add('hidden'); document.getElementById('iconMoon').classList.remove('hidden'); } else { document.body.removeAttribute('data-theme'); document.getElementById('iconSun').classList.remove('hidden'); document.getElementById('iconMoon').classList.add('hidden'); } }
+
+        // AUTH
+        function handleLogin() {
+            const mode = document.getElementById('loginMode').value;
+            if(mode === 'admin') {
+                if(document.getElementById('adminUsername').value === 'admin' && document.getElementById('adminPassword').value === 'admin123') {
+                    showView('adminView'); document.getElementById('themeTogglePublic').style.display = 'none'; initAdmin();
+                } else alert('Login salah!');
+            } else {
+                showView('siswaView'); document.getElementById('themeTogglePublic').style.display = 'flex'; initSiswa();
+            }
+        }
+        function logout() { showView('loginView'); document.getElementById('themeTogglePublic').style.display = 'flex'; }
+        function showView(id) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+
+        // SISWA LOGIC
+        function initSiswa() { resetForm(); initKelasDropdown(); updateDateTime(); getLocation(); }
+        function resetForm() {
+            formData = { kelas:'', siswa:null, tanggal:'', waktu:'', status:'', lokasi:'', foto:null };
+            document.getElementById('selectKelas').value = '';
+            document.getElementById('selectSiswa').innerHTML = '<option value="">-- Pilih --</option>';
+            document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected'));
+            ['btnStep1', 'btnStep2', 'btnStep4', 'btnStep5a'].forEach(id => { let el=document.getElementById(id); if(el) el.disabled=true; });
+            currentStep = 1;
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            updateProgress();
+        }
+        function initKelasDropdown() {
+            let sel = document.getElementById('selectKelas'); sel.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            Object.keys(databaseSiswa).forEach(k => sel.add(new Option(k, k)));
+            sel.onchange = function() { formData.kelas = this.value; updateSiswaDropdown(); document.getElementById('btnStep1').disabled = !this.value; };
+        }
+        function updateSiswaDropdown() {
+            let sel = document.getElementById('selectSiswa'); sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+            if(databaseSiswa[formData.kelas]) databaseSiswa[formData.kelas].forEach(s => sel.add(new Option(s.nama, s.id)));
+            sel.onchange = function() { formData.siswa = databaseSiswa[formData.kelas].find(s => s.id === this.value); document.getElementById('btnStep2').disabled = !this.value; };
+        }
+        function updateDateTime() { let now = new Date(); document.getElementById('inputTanggal').value = now.toISOString().split('T')[0]; document.getElementById('inputWaktu').value = now.toTimeString().slice(0,5); formData.tanggal = document.getElementById('inputTanggal').value; formData.waktu = document.getElementById('inputWaktu').value; }
+        function getLocation() { if(navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { formData.lokasi = pos.coords.latitude.toFixed(4)+', '+pos.coords.longitude.toFixed(4); document.getElementById('locationText').textContent = formData.lokasi; }, () => { formData.lokasi = 'Tidak ada'; document.getElementById('locationText').textContent = 'Tidak ada izin'; }); }
+        function selectStatus(status) { formData.status = status; document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected')); document.querySelector(`[data-status="${status}"]`).classList.add('selected'); document.getElementById('btnStep4').disabled = false; }
+        
+        async function startCamera() { try { cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}); let video = document.getElementById('cameraVideo'); video.srcObject = cameraStream; video.style.display = 'block'; document.getElementById('cameraOverlay').style.display = 'none'; document.getElementById('btnCapture').disabled = false; } catch(e) { alert('Kamera error'); } }
+        function capturePhoto() { let video = document.getElementById('cameraVideo'); let photo = document.getElementById('capturedPhoto'); let canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); photo.src = canvas.toDataURL('image/jpeg'); photo.style.display = 'block'; video.style.display = 'none'; formData.foto = photo.src; if(cameraStream) cameraStream.getTracks().forEach(t => t.stop()); document.getElementById('btnStep5a').disabled = false; }
+        
+        function nextStep(from) {
+            const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7'];
+            document.getElementById(steps[from-1]).classList.remove('active');
+            let nextId;
+            if(from===4) nextId = formData.status === 'hadir' ? 'step5a' : 'step5b';
+            else if(from===5) { showRecap(); nextId = 'step6'; }
+            else nextId = steps[from];
+            setTimeout(() => document.getElementById(nextId).classList.add('active'), 100);
+            if(from===2) document.getElementById('selectedKelasLabel').textContent = formData.kelas;
+            currentStep = from+1; updateProgress();
+        }
+        
+        function prevStep(to) { 
+            document.querySelectorAll('.step').forEach(s=>s.classList.remove('active')); 
+            document.getElementById('step'+to).classList.add('active'); 
+            currentStep=to; 
+            updateProgress(); 
+        }
+        
+        function updateProgress() { let p = currentStep>5?6:currentStep; document.getElementById('progressFill').style.width = (p/6*100)+'%'; document.getElementById('progressPercent').textContent = Math.round(p/6*100)+'%'; document.getElementById('currentStep').textContent = p; }
+        function showRecap() { let statusColors = {hadir:'var(--success)', izin:'var(--warning)', sakit:'var(--danger)', alpha:'var(--alpha)'}; document.getElementById('recapContainer').innerHTML = `<div class="space-y-2"><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Nama</span><span class="font-semibold">${formData.siswa?.nama}</span></div><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Status</span><span class="font-semibold" style="color:${statusColors[formData.status]}">${formData.status.toUpperCase()}</span></div></div>`; }
+        function editData() { prevStep(1); }
+
+        // FUNGSI SUBMIT KE GOOGLE SHEET
+        function submitPresensi() {
+            // 1. Validasi Duplikat
+            let exist = presensiData.find(p => p.siswaId === formData.siswa.id && p.tanggal === formData.tanggal);
+            if(exist) { alert('Maaf, sudah presensi hari ini!'); return; }
+
+            // 2. Siapkan Data
+            const id = 'PRSN-'+Date.now().toString(36).toUpperCase();
+            document.getElementById('presensiId').textContent = id;
+
+            const dataToSend = {
+                id: id,
+                tanggal: formData.tanggal,
+                waktu: formData.waktu,
+                nama: formData.siswa.nama,
+                kelas: formData.kelas,
+                status: formData.status,
+                lokasi: formData.lokasi,
+                keterangan: document.getElementById('inputKeterangan').value
+            };
+
+            // 3. Simpan Ke Local Storage (Backup)
+            presensiData.push({
+                id, siswaId: formData.siswa.id, siswaNama: formData.siswa.nama, kelas: formData.kelas,
+                tanggal: formData.tanggal, waktu: formData.waktu, status: formData.status,
+                lokasi: formData.lokasi, keterangan: dataToSend.keterangan, timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('presensiData', JSON.stringify(presensiData));
+
+            // 4. Kirim Ke Google Sheets
+            if(API_URL && API_URL !== 'MASUKKAN_URL_GOOGLE_SCRIPT_ANDA_DISINI') {
+                fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSend)
+                })
+                .then(() => {
+                    console.log("Data terkirim ke Google Sheets");
+                    nextStep(6); // Pindah ke halaman sukses
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert("Gagal mengirim ke server, tapi data disimpan lokal.");
+                    nextStep(6);
+                });
+            } else {
+                alert("URL API belum diatur. Data hanya disimpan lokal.");
+                nextStep(6);
+            }
+        }
+
+        // ADMIN LOGIC
+        function initAdmin() { populateKelas(); loadDashboard(); loadPresensiData(); loadSiswaData(); loadKelasData(); }
+        function showAdminSection(sec) { document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); event.target.classList.add('active'); document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden')); document.getElementById('section'+sec.charAt(0).toUpperCase()+sec.slice(1)).classList.remove('hidden'); if(sec==='dashboard') loadDashboard(); if(sec==='presensi') loadPresensiData(); if(sec==='siswa') loadSiswaData(); if(sec==='kelas') loadKelasData(); }
+        function populateKelas() { ['filterKelas', 'addSiswaKelas'].forEach(id => { let el = document.getElementById(id); if(el) { el.innerHTML = '<option value="">Pilih Kelas</option>'; Object.keys(databaseSiswa).forEach(k => el.add(new Option(k, k))); } }); }
+        
+        function loadDashboard() {
+            let today = new Date().toISOString().split('T')[0];
+            let td = presensiData.filter(p => p.tanggal === today);
+            document.getElementById('statTotal').textContent = td.length;
+            document.getElementById('statHadir').textContent = td.filter(p=>p.status==='hadir').length;
+            document.getElementById('statIzin').textContent = td.filter(p=>p.status==='izin').length;
+            document.getElementById('statSakit').textContent = td.filter(p=>p.status==='sakit').length;
+            document.getElementById('statAlpha').textContent = td.filter(p=>p.status==='alpha').length;
+            document.getElementById('recentActivityBody').innerHTML = presensiData.slice(-5).reverse().map(p => `<tr><td>${p.waktu}</td><td>${p.siswaNama}</td><td><span class="badge badge-${p.status}">${p.status}</span></td></tr>`).join('');
+        }
+        
+        function loadPresensiData() {
+            let tgl = document.getElementById('filterTanggal').value;
+            let stat = document.getElementById('filterStatus').value;
+            let data = presensiData.filter(p => (!tgl || p.tanggal === tgl) && (!stat || p.status === stat)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+            document.getElementById('presensiTableBody').innerHTML = data.map(p => `<tr><td>${p.id}</td><td>${p.tanggal}</td><td>${p.siswaNama}</td><td>${p.kelas}</td><td><span class="badge badge-${p.status}">${p.status}</span></td><td><button class="btn-danger btn-sm" onclick="deletePresensi('${p.id}')">Hapus</button></td></tr>`).join('');
+        }
+        function deletePresensi(id) { document.getElementById('confirmDeleteBtn').onclick = () => { presensiData = presensiData.filter(p => p.id !== id); localStorage.setItem('presensiData', JSON.stringify(presensiData)); closeModal('deleteModal'); loadPresensiData(); loadDashboard(); }; openModal('deleteModal'); }
+
+        function loadSiswaData() {
+            let src = document.getElementById('searchSiswa').value.toLowerCase();
+            let html = '';
+            Object.keys(databaseSiswa).forEach(k => {
+                databaseSiswa[k].forEach(s => {
+                    if(src && !s.nama.toLowerCase().includes(src)) return;
+                    html += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${k}</td><td><button class="btn-danger btn-sm" onclick="deleteSiswa('${s.id}', '${k}')">Hapus</button></td></tr>`;
+                });
+            });
+            document.getElementById('siswaTableBody').innerHTML = html || '<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>';
+        }
+        function saveNewSiswa() {
+            let id = document.getElementById('addSiswaId').value;
+            let nama = document.getElementById('addSiswaNama').value;
+            let kelas = document.getElementById('addSiswaKelas').value;
+            if(!id || !nama || !kelas) return alert('Lengkapi data');
+            if(!databaseSiswa[kelas]) databaseSiswa[kelas] = [];
+            databaseSiswa[kelas].push({id, nama});
+            localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
+            closeModal('addSiswaModal'); loadSiswaData(); populateKelas();
+        }
+        function deleteSiswa(id, kelas) {
+            document.getElementById('confirmDeleteBtn').onclick = () => {
+                databaseSiswa[kelas] = databaseSiswa[kelas].filter(s => s.id !== id);
+                localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
+                closeModal('deleteModal'); loadSiswaData();
+            };
+            openModal('deleteModal');
+        }
+
+        // KELAS LOGIC
+        function loadKelasData() {
+            document.getElementById('kelasTableBody').innerHTML = Object.keys(databaseSiswa).map(k => `<tr><td>${k}</td><td>${databaseSiswa[k].length}</td><td><button class="btn-danger btn-sm" onclick="deleteKelas('${k}')">Hapus</button></td></tr>`).join('');
+        }
+        function saveNewKelas() {
+            let nama = document.getElementById('addKelasNama').value.trim();
+            if(!nama) return alert('Nama wajib');
+            if(databaseSiswa[nama]) return alert('Sudah ada');
+            databaseSiswa[nama] = [];
+            localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
+            closeModal('addKelasModal'); loadKelasData(); populateKelas();
+        }
+        function deleteKelas(k) {
+            document.getElementById('confirmDeleteBtn').onclick = () => {
+                delete databaseSiswa[k];
+                localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
+                closeModal('deleteModal'); loadKelasData(); populateKelas();
+            };
+            openModal('deleteModal');
+        }
+
+        // IMPORT EXCEL FIX
+        function handleImportFile(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, {type: 'array'});
+                    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    let json = XLSX.utils.sheet_to_json(sheet, {header:1});
+                    
+                    json.slice(1).forEach(row => {
+                        let id = String(row[0] || '').trim();
+                        let nama = String(row[1] || '').trim();
+                        let kelas = String(row[2] || '').trim();
+                        if(id && nama && kelas) {
+                            if(!databaseSiswa[kelas]) databaseSiswa[kelas] = [];
+                            if(!databaseSiswa[kelas].find(s => s.id === id)) databaseSiswa[kelas].push({id, nama});
+                        }
+                    });
+                    localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
+                    alert('Import berhasil!');
+                    loadSiswaData(); loadKelasData(); populateKelas();
+                } catch(err) { console.error(err); alert('Format file salah'); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // EXPORT
+        function exportData(type) {
+            let dari = document.getElementById('exportDari').value;
+            let sampai = document.getElementById('exportSampai').value;
+            let data = presensiData.filter(p => (!dari || p.tanggal >= dari) && (!sampai || p.tanggal <= sampai));
+            
+            if(type === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                doc.text("Rekap Presensi", 14, 22);
+                doc.autoTable({ startY: 30, head: [['Tanggal', 'Nama', 'Kelas', 'Status']], body: data.map(p => [p.tanggal, p.siswaNama, p.kelas, p.status]) });
+                doc.save('rekap.pdf');
+            } else {
+                let csv = 'ID,Tanggal,Nama,Kelas,Status\n' + data.map(p => `${p.id},${p.tanggal},${p.siswaNama},${p.kelas},${p.status}`).join('\n');
+                let blob = new Blob([csv], {type: 'text/csv'});
+                let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data.csv'; a.click();
+            }
+        }
+        function sendWhatsApp() {
+            let num = prompt("Masukkan nomor WA (628...)");
+            if(!num) return;
+            exportData('pdf');
+            setTimeout(() => {
+                window.open(`https://wa.me/${num}?text=Lampiran%20Rekap%20Presensi`, '_blank');
+            }, 1000);
+        }
+
+        // UTILS
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    </script>
+</body>
+</html>
