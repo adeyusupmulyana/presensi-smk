@@ -495,25 +495,7 @@
                 await api('submitPresensi', { data: dataToSend }, 'POST');
                 document.getElementById('presensiId').textContent = id; nextStep(6); showToast('Presensi berhasil');
             } catch (err) { showToast('Gagal mengirim', 'error'); }
-    // 2. CEK DOUBLE ABSEN (Batas 1x per hari)
-    const today = new Date().toISOString().split('T')[0];
-    const storedData = localStorage.getItem(STORAGE_KEY);
-    
-    // Jika ada data tersimpan
-    if (storedData) {
-        const parsed = JSON.parse(storedData);
-        // Jika ID Siswa sama DAN Tangganya sama -> TOLAK
-        if (parsed.idSiswa === formData.siswa.id && parsed.tanggal === today) {
-            showToast('Anda sudah presensi hari ini!', true);
-            
-            // Kunci tombol dan ubah teks agar jelas
-            const btn = document.getElementById('btnSubmit');
-            btn.disabled = true;
-            btn.textContent = 'SUDAH PRESENSI';
-            return; // Hentikan proses
-
-            
-        }
+          }
 
         // ==========================================
         // ADMIN LOGIC (PERBAIKAN TOTAL)
