@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
+        /* CSS Sama seperti sebelumnya */
         :root {
             --bg-primary: #0a0f1a; --bg-secondary: #111827; --bg-card: #1a2332;
             --fg-primary: #f1f5f9; --fg-secondary: #94a3b8; --fg-muted: #64748b;
@@ -23,49 +24,21 @@
             --fg-primary: #0f172a; --fg-secondary: #475569; --fg-muted: #94a3b8;
             --border: #e2e8f0; --accent-glow: rgba(249, 115, 22, 0.2);
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-primary); color: var(--fg-primary);
-            min-height: 100vh; overflow-x: hidden;
-            transition: background 0.5s ease, color 0.5s ease;
-        }
-        
-        /* Background & Noise Effects */
-        .bg-mesh {
-            position: fixed; inset: 0;
-            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(249, 115, 22, 0.12), transparent);
-            pointer-events: none; z-index: 0;
-        }
-        .noise-overlay {
-            position: fixed; inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-            opacity: 0.03; pointer-events: none; z-index: 1;
-        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-primary); color: var(--fg-primary); min-height: 100vh; overflow-x: hidden; }
+        .bg-mesh { position: fixed; inset: 0; background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(249, 115, 22, 0.12), transparent); pointer-events: none; z-index: 0; }
+        .noise-overlay { position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"); opacity: 0.03; pointer-events: none; z-index: 1; }
         .floating-particles { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
         .particle { position: absolute; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; opacity: 0.3; animation: float 20s infinite ease-in-out; }
         @keyframes float { 0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; } }
 
-        /* ==================== TRANSITIONS SYSTEM ==================== */
-        .view {
-            display: none;
-            opacity: 0;
-            transform: scale(0.98);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .view.active {
-            display: block;
-            animation: viewIn 0.5s ease forwards;
-        }
+        .view { display: none; opacity: 0; transform: scale(0.98); transition: opacity 0.4s ease, transform 0.4s ease; }
+        .view.active { display: block; animation: viewIn 0.5s ease forwards; }
         .view.exit { animation: viewOut 0.3s ease forwards; }
         @keyframes viewIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
         @keyframes viewOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.02); } }
 
-        .step {
-            display: none;
-            opacity: 0;
-            position: relative;
-        }
+        .step { display: none; opacity: 0; position: relative; }
         .step.active { display: block; animation: stepSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .step.exit-left { display: block; animation: stepSlideOutLeft 0.3s ease forwards; }
         .step.exit-right { display: block; animation: stepSlideOutRight 0.3s ease forwards; }
@@ -76,46 +49,35 @@
         @keyframes stepSlideInBack { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes stepSlideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
 
-        .card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 20px; backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.5s;
-        }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(10px); transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.5s; }
         
         .btn-primary, .btn-secondary, .btn-danger {
-            position: relative; overflow: hidden;
-            font-weight: 600; padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer;
-            transition: all 0.3s ease;
+            position: relative; overflow: hidden; font-weight: 600; padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer;
+            transition: all 0.3s ease; font-family: inherit; font-size: 14px; display: inline-flex; align-items: center; justify-content: center;
         }
         .btn-primary { background: linear-gradient(135deg, var(--accent), #ea580c); color: white; box-shadow: 0 4px 20px var(--accent-glow); }
         .btn-primary:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 30px var(--accent-glow); }
+        .btn-primary:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
         
-        .ripple {
-            position: absolute; border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0); animation: ripple 0.6s linear;
-            pointer-events: none;
-        }
+        .btn-secondary { background: var(--bg-secondary); color: var(--fg-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+        
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid transparent; }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .ripple { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.4); transform: scale(0); animation: ripple 0.6s linear; pointer-events: none; }
         @keyframes ripple { to { transform: scale(4); opacity: 0; } }
 
-        .input-field { 
-            width: 100%; background: var(--bg-secondary); border: 2px solid var(--border);
-            border-radius: 12px; padding: 12px 16px; color: var(--fg-primary); font-size: 14px;
-            transition: all 0.3s ease;
-        }
+        .input-field { width: 100%; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--fg-primary); font-size: 14px; transition: all 0.3s ease; font-family: inherit; }
         .input-field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
 
         .hidden { display: none !important; }
-        .sidebar {
-            width: 260px; background: var(--bg-card); border-right: 1px solid var(--border);
-            height: 100vh; position: fixed; left: 0; top: 0; z-index: 50;
-            transition: transform 0.3s ease, background 0.5s; overflow-y: auto;
-        }
-        .sidebar-item {
-            display: flex; align-items: center; gap: 12px; padding: 14px 20px;
-            color: var(--fg-secondary); cursor: pointer;
-            transition: all 0.2s ease; border-left: 3px solid transparent;
-        }
+        .sidebar { width: 260px; background: var(--bg-card); border-right: 1px solid var(--border); height: 100vh; position: fixed; left: 0; top: 0; z-index: 50; transition: transform 0.3s ease, background 0.5s; overflow-y: auto; overflow-x: hidden; }
+        .sidebar-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: var(--fg-secondary); cursor: pointer; transition: all 0.2s ease; border-left: 3px solid transparent; }
         .sidebar-item:hover { background: rgba(249, 115, 22, 0.1); color: var(--fg-primary); }
         .sidebar-item.active { background: rgba(249, 115, 22, 0.15); color: var(--accent); border-left-color: var(--accent); }
         .main-content { margin-left: 260px; min-height: 100vh; padding: 24px; transition: margin-left 0.3s ease; }
@@ -123,7 +85,10 @@
         .data-table { width: 100%; border-collapse: collapse; }
         .data-table th { text-align: left; padding: 14px 16px; background: var(--bg-secondary); color: var(--fg-secondary); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border); }
         .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .data-table tr { transition: background 0.2s; }
+        .data-table tbody tr:hover { background: rgba(249, 115, 22, 0.05); }
+
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
         .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
         .badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
         .badge-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
@@ -132,21 +97,42 @@
         .status-option { background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 14px; }
         .status-option:hover { border-color: var(--fg-muted); }
         .status-option.selected { border-color: var(--accent); background: rgba(249, 115, 22, 0.1); }
+        .status-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease; }
         .modal-overlay.active { display: flex; opacity: 1; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; transform: scale(0.9); transition: transform 0.3s ease; }
         .modal-overlay.active .modal-content { transform: scale(1); }
+        
         .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
         .theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 20; width: 50px; height: 50px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s; }
         .theme-toggle:hover { transform: scale(1.1) rotate(15deg); border-color: var(--accent); }
-        @media (max-width: 1024px) { .sidebar { transform: translateX(-100%); z-index: 60; } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } }
+        
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border); padding: 16px 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 12px; animation: toastIn 0.3s ease forwards; }
+        .toast.toast-out { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { to { transform: translateX(100%); opacity: 0; } }
+
+        .mobile-menu-btn { display: none; position: fixed; top: 20px; left: 20px; z-index: 55; width: 40px; height: 40px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); align-items: center; justify-content: center; cursor: pointer; }
+
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); z-index: 60; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .mobile-menu-btn { display: flex; }
+            .theme-toggle { bottom: 20px; right: 20px; }
+        }
     </style>
 </head>
 <body>
     <div class="bg-mesh"></div>
     <div class="noise-overlay"></div>
     <div class="floating-particles" id="particles"></div>
+
+    <div class="toast-container" id="toastContainer"></div>
 
     <button class="theme-toggle" onclick="toggleTheme()" id="themeTogglePublic">
         <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -162,7 +148,7 @@
                         <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4" style="background: linear-gradient(135deg, var(--accent), #ea580c)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
                         </div>
-                        <h1 class="font-display text-2xl font-bold mb-2" id="loginTitle">SMK Handayani Banjaran</h1>
+                        <h1 class="font-display text-2xl font-bold mb-2">SMK Handayani Banjaran</h1>
                         <p style="color: var(--fg-secondary)">Sistem Presensi Digital</p>
                     </div>
                     <div class="space-y-4">
@@ -207,7 +193,7 @@
                     <div class="card p-6 sm:p-8">
                         <div class="text-center mb-8"><h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Pilih Kelas</h1></div>
                         <div class="space-y-4">
-                            <select class="input-field" id="selectKelas"><option value="">-- Pilih Kelas --</option></select>
+                            <select class="input-field" id="selectKelas"><option value="">Memuat data...</option></select>
                             <button class="btn-primary w-full" onclick="nextStep(1)" id="btnStep1" disabled>Lanjutkan</button>
                         </div>
                     </div>
@@ -262,7 +248,7 @@
                     </div>
                 </div>
 
-                <!-- Step 5a (Hadir) -->
+                <!-- Step 5a -->
                 <div class="step" id="step5a">
                     <div class="card p-6 sm:p-8">
                         <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Lokasi & Foto</h1></div>
@@ -270,7 +256,7 @@
                             <div><label class="block text-sm mb-2" style="color: var(--fg-secondary)">Lokasi</label><div class="input-field flex items-center gap-3" style="background: var(--bg-card)"><span id="locationText" style="color: var(--fg-secondary)">Mendapatkan lokasi...</span></div></div>
                             <div>
                                 <label class="block text-sm mb-2" style="color: var(--fg-secondary)">Foto Selfie</label>
-                                <div style="background: var(--bg-secondary); border-radius:12px; overflow:hidden; position:relative; aspect-ratio: 4/3;">
+                                <div style="background: var(--bg-secondary); border-radius:12px; overflow:hidden; position:relative; aspect-ratio: 4/3; border: 1px solid var(--border);">
                                     <video id="cameraVideo" autoplay playsinline style="display: none; width:100%; height:100%; object-fit:cover;"></video>
                                     <img id="capturedPhoto" style="display: none; width:100%; height:100%; object-fit:cover;">
                                     <div id="cameraOverlay" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3);"><p style="color:white">Klik Buka Kamera</p></div>
@@ -288,7 +274,7 @@
                     </div>
                 </div>
 
-                <!-- Step 5b (Non-Hadir) -->
+                <!-- Step 5b -->
                 <div class="step" id="step5b">
                     <div class="card p-6 sm:p-8">
                         <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Keterangan</h1></div>
@@ -309,7 +295,7 @@
                         <div class="mb-6" id="recapContainer"></div>
                         <div class="flex gap-3">
                             <button class="btn-secondary flex-1" onclick="editData()">Ubah Data</button>
-                            <button class="btn-primary flex-1" onclick="submitPresensi()">Kirim Presensi</button>
+                            <button class="btn-primary flex-1" onclick="submitPresensi()" id="btnSubmitPresensi">Kirim Presensi</button>
                         </div>
                     </div>
                 </div>
@@ -330,16 +316,23 @@
 
     <!-- ADMIN VIEW -->
     <div class="view" id="adminView">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
         <aside class="sidebar" id="adminSidebar">
-            <div class="p-5 border-b" style="border-color: var(--border)"><h2 class="font-bold" id="sidebarTitle">Admin Panel</h2></div>
+            <div class="p-5 border-b flex justify-between items-center" style="border-color: var(--border)">
+                <h2 class="font-bold">Admin Panel</h2>
+                <button class="lg:hidden" onclick="toggleSidebar()"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
             <nav class="py-4">
-                <div class="sidebar-item active" onclick="showAdminSection('dashboard')">Dashboard</div>
-                <div class="sidebar-item" onclick="showAdminSection('presensi')">Data Presensi</div>
-                <div class="sidebar-item" onclick="showAdminSection('siswa')">Data Siswa</div>
-                <div class="sidebar-item" onclick="showAdminSection('kelas')">Data Kelas</div>
-                <div class="sidebar-item" onclick="showAdminSection('export')">Export Data</div>
+                <div class="sidebar-item active" onclick="showAdminSection('dashboard')"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>Dashboard</span></div>
+                <div class="sidebar-item" onclick="showAdminSection('presensi')"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Data Presensi</span></div>
+                <div class="sidebar-item" onclick="showAdminSection('siswa')"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Data Siswa</span></div>
+                <div class="sidebar-item" onclick="showAdminSection('kelas')"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Data Kelas</span></div>
+                <div class="sidebar-item" onclick="showAdminSection('export')"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Export Data</span></div>
             </nav>
-            <div class="absolute bottom-0 left-0 right-0 p-4"><button class="btn-secondary w-full" onclick="logout()">Keluar</button></div>
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t" style="border-color: var(--border)"><button class="btn-secondary w-full" onclick="logout()">Keluar</button></div>
         </aside>
 
         <main class="main-content">
@@ -358,15 +351,18 @@
 
             <section id="sectionPresensi" class="admin-section hidden">
                 <div class="card p-5">
-                    <div class="flex gap-3 mb-4"><input type="date" class="input-field" id="filterTanggal" oninput="loadPresensiData()"><select class="input-field" id="filterStatus" onchange="loadPresensiData()"><option value="">Semua Status</option><option value="hadir">Hadir</option><option value="izin">Izin</option><option value="sakit">Sakit</option><option value="alpha">Alpha</option></select></div>
-                    <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>ID</th><th>Tanggal</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="presensiTableBody"></tbody></table></div>
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <input type="date" class="input-field" id="filterTanggal" oninput="loadPresensiData()">
+                        <select class="input-field" id="filterStatus" onchange="loadPresensiData()"><option value="">Semua Status</option><option value="hadir">Hadir</option><option value="izin">Izin</option><option value="sakit">Sakit</option><option value="alpha">Alpha</option></select>
+                    </div>
+                    <div class="overflow-x-auto"><table class="data-table"><thead><tr><th>ID</th><th>Tanggal</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="presensiTableBody"></tbody></table></div>
                 </div>
             </section>
 
             <section id="sectionSiswa" class="admin-section hidden">
                 <div class="card p-5">
-                    <div class="flex justify-between mb-4">
-                        <input type="text" class="input-field" style="width:200px" placeholder="Cari..." id="searchSiswa" oninput="loadSiswaData()">
+                    <div class="flex flex-wrap justify-between gap-3 mb-4">
+                        <input type="text" class="input-field" style="max-width:200px" placeholder="Cari..." id="searchSiswa" oninput="loadSiswaData()">
                         <div class="flex gap-2">
                             <button class="btn-secondary" onclick="document.getElementById('importFile').click()">Import Excel</button>
                             <input type="file" id="importFile" class="hidden" accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)">
@@ -387,11 +383,11 @@
             <section id="sectionExport" class="admin-section hidden">
                 <div class="card p-5">
                     <h3 class="font-semibold mb-4">Export & WhatsApp</h3>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <input type="date" class="input-field" id="exportDari">
-                        <input type="date" class="input-field" id="exportSampai">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div><label class="text-sm" style="color:var(--fg-secondary)">Dari Tanggal</label><input type="date" class="input-field mt-1" id="exportDari"></div>
+                        <div><label class="text-sm" style="color:var(--fg-secondary)">Sampai Tanggal</label><input type="date" class="input-field mt-1" id="exportSampai"></div>
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex flex-wrap gap-3">
                         <button class="btn-primary" onclick="exportData('csv')">Export CSV</button>
                         <button class="btn-primary" onclick="exportData('pdf')">Export PDF</button>
                         <button class="btn-secondary" onclick="sendWhatsApp()">Kirim WA (PDF)</button>
@@ -402,41 +398,85 @@
     </div>
 
     <!-- MODALS -->
-    <div class="modal-overlay" id="addSiswaModal"><div class="modal-content"><div class="p-5 border-b"><h3>Tambah Siswa</h3></div><div class="p-5 space-y-4"><input type="text" id="addSiswaId" class="input-field" placeholder="ID"><input type="text" id="addSiswaNama" class="input-field" placeholder="Nama"><select id="addSiswaKelas" class="input-field"></select></div><div class="p-5 border-t flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('addSiswaModal')">Batal</button><button class="btn-primary flex-1" onclick="saveNewSiswa()">Simpan</button></div></div></div>
-    <div class="modal-overlay" id="addKelasModal"><div class="modal-content"><div class="p-5 border-b"><h3>Tambah Kelas</h3></div><div class="p-5"><input type="text" id="addKelasNama" class="input-field" placeholder="Nama Kelas (XII TKJ 1)"></div><div class="p-5 border-t flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('addKelasModal')">Batal</button><button class="btn-primary flex-1" onclick="saveNewKelas()">Simpan</button></div></div></div>
-    <div class="modal-overlay" id="deleteModal"><div class="modal-content"><div class="p-5 text-center"><h3 class="font-semibold mb-4">Hapus Data?</h3><div class="flex gap-3"><button class="btn-secondary flex-1" onclick="closeModal('deleteModal')">Batal</button><button class="btn-danger flex-1" id="confirmDeleteBtn">Hapus</button></div></div></div></div>
+    <div class="modal-overlay" id="addSiswaModal">
+        <div class="modal-content">
+            <div class="p-5 border-b" style="border-color: var(--border)"><h3 class="font-semibold">Tambah Siswa</h3></div>
+            <div class="p-5 space-y-4">
+                <input type="text" id="addSiswaId" class="input-field" placeholder="NIS/NIDN">
+                <input type="text" id="addSiswaNama" class="input-field" placeholder="Nama Lengkap">
+                <select id="addSiswaKelas" class="input-field"><option value="">Pilih Kelas</option></select>
+            </div>
+            <div class="p-5 border-t flex gap-3" style="border-color: var(--border)">
+                <button class="btn-secondary flex-1" onclick="closeModal('addSiswaModal')">Batal</button>
+                <button class="btn-primary flex-1" onclick="saveNewSiswa()" id="btnSaveSiswa">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addKelasModal">
+        <div class="modal-content">
+            <div class="p-5 border-b" style="border-color: var(--border)"><h3 class="font-semibold">Tambah Kelas</h3></div>
+            <div class="p-5"><input type="text" id="addKelasNama" class="input-field" placeholder="Nama Kelas (cth: XII TKJ 1)"></div>
+            <div class="p-5 border-t flex gap-3" style="border-color: var(--border)">
+                <button class="btn-secondary flex-1" onclick="closeModal('addKelasModal')">Batal</button>
+                <button class="btn-primary flex-1" onclick="saveNewKelas()" id="btnSaveKelas">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editPresensiModal">
+        <div class="modal-content">
+            <div class="p-5 border-b" style="border-color: var(--border)"><h3 class="font-semibold">Edit Status Presensi</h3></div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="editPresensiId">
+                <div>
+                    <label class="text-sm" style="color:var(--fg-secondary)">Status</label>
+                    <select id="editPresensiStatus" class="input-field mt-1">
+                        <option value="hadir">Hadir</option>
+                        <option value="izin">Izin</option>
+                        <option value="sakit">Sakit</option>
+                        <option value="alpha">Alpha</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm" style="color:var(--fg-secondary)">Keterangan</label>
+                    <textarea id="editPresensiKeterangan" class="input-field mt-1" rows="3" placeholder="Keterangan tambahan..."></textarea>
+                </div>
+            </div>
+            <div class="p-5 border-t flex gap-3" style="border-color: var(--border)">
+                <button class="btn-secondary flex-1" onclick="closeModal('editPresensiModal')">Batal</button>
+                <button class="btn-primary flex-1" onclick="saveEditPresensi()" id="btnUpdatePresensi">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="p-5 text-center">
+                <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(239, 68, 68, 0.1)"><svg width="32" height="32" stroke="var(--danger)" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+                <h3 class="font-semibold mb-2">Hapus Data?</h3>
+                <p class="text-sm mb-4" style="color:var(--fg-secondary)">Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="flex gap-3">
+                    <button class="btn-secondary flex-1" onclick="closeModal('deleteModal')">Batal</button>
+                    <button class="btn-danger flex-1" id="confirmDeleteBtn">Hapus</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ==========================================
         // CONFIG & API
         // ==========================================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxPLAL8L8KykBpqNLBnuAPfpsFDQ5rekNJOdccA3ZrFJsUins0SKW8b2vsCwDrA2OTAwA/exec'; 
+        // PENTING: Ganti URL di bawah dengan URL Web App dari Google Apps Script Anda
+        // Pastikan linknya dalam satu baris.
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyCQPvE9gKKo5wLUp4sLwcxNejIjES_lk-3ppGs2ghbZbJSJW4VuCNyR2eNKrMDoPqj/exec'; 
 
         // ==========================================
-        // DB VERSIONING (SOLUTION FOR MOBILE CACHE)
-        // Jika Anda mengubah data default di bawah, ubah angka versi ini (misal jadi 3, 4, dst)
+        // GLOBAL STATE
         // ==========================================
-        const DB_VERSION = 2; 
-        
-        // Check Version Logic
-        const currentVer = localStorage.getItem('db_version');
-        if (currentVer != DB_VERSION) {
-            console.log("New DB Version detected. Clearing old data...");
-            localStorage.clear();
-            localStorage.setItem('db_version', DB_VERSION);
-        }
-
-        // DEFAULT DATA (Diubah menjadi XI TKJ 2 sesuai request)
-        let databaseSiswa = JSON.parse(localStorage.getItem('databaseSiswa')) || {
-            "XI TKJ 2": [
-                {id: "001", nama: "Ahmad Fauzi"},
-                {id: "002", nama: "Budi Santoso"},
-                {id: "003", nama: "Citra Dewi"}
-            ]
-        };
-        // ==========================================
-
-        let presensiData = JSON.parse(localStorage.getItem('presensiData')) || [];
+        let databaseSiswa = {}; 
+        let presensiData = [];  
         let appSettings = JSON.parse(localStorage.getItem('appSettings')) || { theme: 'dark' };
         let formData = {}, currentStep=1, cameraStream=null, isAnimating=false;
 
@@ -447,41 +487,67 @@
             document.getElementById('loginMode').onchange = (e) => document.getElementById('adminLoginFields').classList.toggle('hidden', e.target.value === 'siswa');
             initRipple();
         });
-        function createParticles() { for(let i=0; i<15; i++) { let p=document.createElement('div'); p.className='particle'; p.style.left=Math.random()*100+'%'; p.style.animationDelay=Math.random()*5+'s'; document.getElementById('particles').appendChild(p); } }
 
-        // RIPPLE EFFECT
-        function initRipple() {
-            document.querySelectorAll('.btn-primary, .btn-secondary, .btn-danger').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    let ripple = document.createElement('span');
-                    ripple.className = 'ripple';
-                    let rect = this.getBoundingClientRect();
-                    let size = Math.max(rect.width, rect.height);
-                    ripple.style.width = ripple.style.height = size + 'px';
-                    ripple.style.left = e.clientX - rect.left - size/2 + 'px';
-                    ripple.style.top = e.clientY - rect.top - size/2 + 'px';
-                    this.appendChild(ripple);
-                    setTimeout(() => ripple.remove(), 600);
-                });
-            });
+        // Helper: Toast Notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+            toast.innerHTML = `<div style="width: 8px; height: 8px; border-radius: 50%; background: ${colors[type]};"></div><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // THEME
+        // Helper: API Call
+        async function api(action, params = {}, method = 'GET') {
+            try {
+                let url = API_URL;
+                let options = { method: method };
+                
+                if (method === 'POST') {
+                    options.body = JSON.stringify({ action: action, ...params });
+                    options.headers = { 'Content-Type': 'text/plain;charset=utf-8' }; 
+                } else {
+                    const queryParams = new URLSearchParams({ action: action, ...params });
+                    url += '?' + queryParams.toString();
+                }
+
+                const response = await fetch(url, options);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    return result;
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan pada server');
+                }
+            } catch (err) {
+                console.error('API Error:', err);
+                throw err;
+            }
+        }
+
+        // Visual Helpers
+        function createParticles() { const container = document.getElementById('particles'); container.innerHTML = ''; for(let i=0; i<15; i++) { let p=document.createElement('div'); p.className='particle'; p.style.left=Math.random()*100+'%'; p.style.animationDelay=Math.random()*5+'s'; container.appendChild(p); } }
+        function initRipple() { document.querySelectorAll('.btn-primary, .btn-secondary, .btn-danger').forEach(btn => { btn.addEventListener('click', function(e) { let ripple = document.createElement('span'); ripple.className = 'ripple'; let rect = this.getBoundingClientRect(); let size = Math.max(rect.width, rect.height); ripple.style.width = ripple.style.height = size + 'px'; ripple.style.left = e.clientX - rect.left - size/2 + 'px'; ripple.style.top = e.clientY - rect.top - size/2 + 'px'; this.appendChild(ripple); setTimeout(() => ripple.remove(), 600); }); }); }
         function toggleTheme() { appSettings.theme = appSettings.theme === 'light' ? 'dark' : 'light'; applyTheme(appSettings.theme); localStorage.setItem('appSettings', JSON.stringify(appSettings)); }
         function applyTheme(t) { if(t==='light') { document.body.setAttribute('data-theme', 'light'); document.getElementById('iconSun').classList.add('hidden'); document.getElementById('iconMoon').classList.remove('hidden'); } else { document.body.removeAttribute('data-theme'); document.getElementById('iconSun').classList.remove('hidden'); document.getElementById('iconMoon').classList.add('hidden'); } }
 
-        // AUTH & VIEW SWITCHING
+        // AUTH
         function handleLogin() {
             const mode = document.getElementById('loginMode').value;
             if(mode === 'admin') {
-                if(document.getElementById('adminUsername').value === 'admin' && document.getElementById('adminPassword').value === 'admin123') {
+                const user = document.getElementById('adminUsername').value;
+                const pass = document.getElementById('adminPassword').value;
+                if(user === 'admin' && pass === 'admin123') {
                     switchView('adminView');
-                } else alert('Login salah!');
+                } else showToast('Username atau password salah!', 'error');
             } else {
                 switchView('siswaView');
             }
         }
         function logout() { switchView('loginView'); }
+        
         function switchView(targetId) {
             const current = document.querySelector('.view.active');
             const next = document.getElementById(targetId);
@@ -495,10 +561,15 @@
                 else { document.getElementById('themeTogglePublic').style.display = 'flex'; }
             }, 300);
         }
-        function showView(id) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
         // SISWA LOGIC
-        function initSiswa() { resetForm(); initKelasDropdown(); updateDateTime(); getLocation(); }
+        async function initSiswa() { 
+            resetForm(); 
+            await loadKelasDataForSiswa(); 
+            updateDateTime(); 
+            getLocation(); 
+        }
+        
         function resetForm() {
             formData = { kelas:'', siswa:null, tanggal:'', waktu:'', status:'', lokasi:'', foto:null };
             document.getElementById('selectKelas').value = '';
@@ -506,198 +577,369 @@
             document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected'));
             ['btnStep1', 'btnStep2', 'btnStep4', 'btnStep5a'].forEach(id => { let el=document.getElementById(id); if(el) el.disabled=true; });
             currentStep = 1;
-            document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.remove('slide-back'); });
+            document.querySelectorAll('.step').forEach(s => { s.classList.remove('active', 'slide-back'); });
             document.getElementById('step1').classList.add('active');
             updateProgress();
+            document.getElementById('capturedPhoto').style.display = 'none'; document.getElementById('cameraVideo').style.display = 'none'; document.getElementById('cameraOverlay').style.display = 'flex';
         }
-        function initKelasDropdown() {
-            let sel = document.getElementById('selectKelas'); sel.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-            Object.keys(databaseSiswa).forEach(k => sel.add(new Option(k, k)));
-            sel.onchange = function() { formData.kelas = this.value; updateSiswaDropdown(); document.getElementById('btnStep1').disabled = !this.value; };
+
+        async function loadKelasDataForSiswa() {
+            const select = document.getElementById('selectKelas');
+            select.innerHTML = '<option value="">Memuat data...</option>';
+            try {
+                const result = await api('getKelas');
+                databaseSiswa = result.data; 
+                select.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+                // result.data adalah Object { "X TKJ 1": [], "X TKJ 2": [] }
+                Object.keys(databaseSiswa).sort().forEach(k => select.add(new Option(k, k)));
+                select.onchange = function() { 
+                    formData.kelas = this.value; 
+                    loadSiswaDataForSiswa(this.value); 
+                    document.getElementById('btnStep1').disabled = !this.value; 
+                };
+            } catch (err) {
+                select.innerHTML = '<option value="">Gagal memuat</option>';
+                showToast('Gagal mengambil data kelas', 'error');
+            }
         }
-        function updateSiswaDropdown() {
-            let sel = document.getElementById('selectSiswa'); sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-            if(databaseSiswa[formData.kelas]) databaseSiswa[formData.kelas].forEach(s => sel.add(new Option(s.nama, s.id)));
-            sel.onchange = function() { formData.siswa = databaseSiswa[formData.kelas].find(s => s.id === this.value); document.getElementById('btnStep2').disabled = !this.value; };
+
+        async function loadSiswaDataForSiswa(kelas) {
+            const select = document.getElementById('selectSiswa');
+            select.innerHTML = '<option value="">Memuat...</option>';
+            try {
+                // Ambil data siswa spesifik per kelas dari server
+                const result = await api('getSiswa', { kelas: kelas });
+                select.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+                result.data.sort((a,b) => a.nama.localeCompare(b.nama)).forEach(s => select.add(new Option(s.nama, s.id)));
+                select.onchange = function() { 
+                    formData.siswa = result.data.find(s => s.id === this.value); 
+                    document.getElementById('btnStep2').disabled = !this.value; 
+                };
+            } catch(err) {
+                select.innerHTML = '<option value="">Gagal memuat</option>';
+            }
         }
-        function updateDateTime() { let now = new Date(); document.getElementById('inputTanggal').value = now.toISOString().split('T')[0]; document.getElementById('inputWaktu').value = now.toTimeString().slice(0,5); formData.tanggal = document.getElementById('inputTanggal').value; formData.waktu = document.getElementById('inputWaktu').value; }
-        function getLocation() { if(navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { formData.lokasi = pos.coords.latitude.toFixed(4)+', '+pos.coords.longitude.toFixed(4); document.getElementById('locationText').textContent = formData.lokasi; }, () => { formData.lokasi = 'Tidak ada'; document.getElementById('locationText').textContent = 'Tidak ada izin'; }); }
-        function selectStatus(status) { formData.status = status; document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected')); document.querySelector(`[data-status="${status}"]`).classList.add('selected'); document.getElementById('btnStep4').disabled = false; }
         
-        async function startCamera() { try { cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}); let video = document.getElementById('cameraVideo'); video.srcObject = cameraStream; video.style.display = 'block'; document.getElementById('cameraOverlay').style.display = 'none'; document.getElementById('btnCapture').disabled = false; } catch(e) { alert('Kamera error'); } }
-        function capturePhoto() { let video = document.getElementById('cameraVideo'); let photo = document.getElementById('capturedPhoto'); let canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); photo.src = canvas.toDataURL('image/jpeg'); photo.style.display = 'block'; video.style.display = 'none'; formData.foto = photo.src; if(cameraStream) cameraStream.getTracks().forEach(t => t.stop()); document.getElementById('btnStep5a').disabled = false; }
+        function updateDateTime() { let now = new Date(); document.getElementById('inputTanggal').value = now.toISOString().split('T')[0]; document.getElementById('inputWaktu').value = now.toTimeString().slice(0,5); formData.tanggal = document.getElementById('inputTanggal').value; formData.waktu = document.getElementById('inputWaktu').value; }
+        function getLocation() { document.getElementById('locationText').textContent = "Mendapatkan lokasi..."; if(navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { formData.lokasi = pos.coords.latitude.toFixed(4)+', '+pos.coords.longitude.toFixed(4); document.getElementById('locationText').textContent = formData.lokasi; }, () => { formData.lokasi = 'Tidak ada izin'; document.getElementById('locationText').textContent = 'Izin lokasi ditolak'; }); else { formData.lokasi = 'Tidak didukung'; document.getElementById('locationText').textContent = 'GPS tidak didukung'; } }
+        function selectStatus(status) { formData.status = status; document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected')); document.querySelector(`[data-status="${status}"]`).classList.add('selected'); document.getElementById('btnStep4').disabled = false; }
+        async function startCamera() { try { if(cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); } cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}); let video = document.getElementById('cameraVideo'); video.srcObject = cameraStream; video.style.display = 'block'; document.getElementById('cameraOverlay').style.display = 'none'; document.getElementById('capturedPhoto').style.display = 'none'; document.getElementById('btnStartCamera').textContent = 'Ganti Kamera'; document.getElementById('btnCapture').disabled = false; document.getElementById('btnStep5a').disabled = true; } catch(e) { showToast('Gagal membuka kamera', 'error'); } }
+        function capturePhoto() { let video = document.getElementById('cameraVideo'); let photo = document.getElementById('capturedPhoto'); let canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); photo.src = canvas.toDataURL('image/jpeg'); photo.style.display = 'block'; video.style.display = 'none'; formData.foto = photo.src; if(cameraStream) cameraStream.getTracks().forEach(t => t.stop()); document.getElementById('btnStep5a').disabled = false; document.getElementById('btnCapture').disabled = true; }
         
         // STEP NAVIGATION
-        function nextStep(from) {
-            if(isAnimating) return; isAnimating = true;
-            const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7'];
-            let nextId;
-            if(from===4) nextId = formData.status === 'hadir' ? 'step5a' : 'step5b';
-            else if(from===5) { showRecap(); nextId = 'step6'; }
-            else nextId = steps[from];
-            document.getElementById(steps[from-1]).classList.add('exit-left');
-            setTimeout(() => {
-                document.getElementById(steps[from-1]).classList.remove('active', 'exit-left');
-                document.getElementById(nextId).classList.add('active');
-                if(from===2) document.getElementById('selectedKelasLabel').textContent = formData.kelas;
-                currentStep = from+1; updateProgress(); isAnimating = false;
-            }, 300);
-        }
-        function prevStep(to) { 
-            if(isAnimating) return; isAnimating = true;
-            const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7'];
-            const currentStepIndex = currentStep - 1;
-            document.getElementById(steps[currentStepIndex]).classList.add('exit-right');
-            setTimeout(() => {
-                document.getElementById(steps[currentStepIndex]).classList.remove('active', 'exit-right');
-                const nextEl = document.getElementById('step'+to);
-                nextEl.classList.add('slide-back');
-                nextEl.classList.add('active');
-                currentStep=to; updateProgress(); isAnimating = false;
-            }, 300);
-        }
-        
+        function nextStep(from) { if(isAnimating) return; isAnimating = true; const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7']; let nextId; if(from===4) nextId = formData.status === 'hadir' ? 'step5a' : 'step5b'; else if(from===5) { showRecap(); nextId = 'step6'; } else nextId = steps[from]; document.getElementById(steps[from-1]).classList.add('exit-left'); setTimeout(() => { document.getElementById(steps[from-1]).classList.remove('active', 'exit-left'); document.getElementById(nextId).classList.add('active'); if(from===2) document.getElementById('selectedKelasLabel').textContent = formData.kelas; currentStep = from+1; updateProgress(); isAnimating = false; }, 300); }
+        function prevStep(to) { if(isAnimating) return; isAnimating = true; const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7']; const currentStepIndex = currentStep - 1; document.getElementById(steps[currentStepIndex]).classList.add('exit-right'); setTimeout(() => { document.getElementById(steps[currentStepIndex]).classList.remove('active', 'exit-right'); const nextEl = document.getElementById('step'+to); nextEl.classList.add('slide-back'); nextEl.classList.add('active'); currentStep=to; updateProgress(); isAnimating = false; }, 300); }
         function updateProgress() { let p = currentStep>5?6:currentStep; document.getElementById('progressFill').style.width = (p/6*100)+'%'; document.getElementById('progressPercent').textContent = Math.round(p/6*100)+'%'; document.getElementById('currentStep').textContent = p; }
-        function showRecap() { let statusColors = {hadir:'var(--success)', izin:'var(--warning)', sakit:'var(--danger)', alpha:'var(--alpha)'}; document.getElementById('recapContainer').innerHTML = `<div class="space-y-2"><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Nama</span><span class="font-semibold">${formData.siswa?.nama}</span></div><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Status</span><span class="font-semibold" style="color:${statusColors[formData.status]}">${formData.status.toUpperCase()}</span></div></div>`; }
+        function showRecap() { let statusColors = {hadir:'var(--success)', izin:'var(--warning)', sakit:'var(--danger)', alpha:'var(--alpha)'}; let keterangan = formData.status === 'hadir' ? formData.lokasi : document.getElementById('inputKeterangan').value; document.getElementById('recapContainer').innerHTML = `<div class="space-y-2"><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Nama</span><span class="font-semibold">${formData.siswa?.nama}</span></div><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Kelas</span><span class="font-semibold">${formData.kelas}</span></div><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Status</span><span class="font-semibold" style="color:${statusColors[formData.status]}">${formData.status.toUpperCase()}</span></div><div class="flex justify-between py-2 border-b" style="border-color:var(--border)"><span style="color:var(--fg-secondary)">Keterangan</span><span class="font-semibold">${keterangan || '-'}</span></div></div>`; }
         function editData() { prevStep(1); }
 
-        // SUBMIT
-        function submitPresensi() {
-            let exist = presensiData.find(p => p.siswaId === formData.siswa.id && p.tanggal === formData.tanggal);
-            if(exist) { alert('Maaf, sudah presensi hari ini!'); return; }
+        // SUBMIT PRESENSI
+        async function submitPresensi() {
+            const btn = document.getElementById('btnSubmitPresensi');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Mengirim...';
+
             const id = 'PRSN-'+Date.now().toString(36).toUpperCase();
-            document.getElementById('presensiId').textContent = id;
-            const dataToSend = { id: id, tanggal: formData.tanggal, waktu: formData.waktu, nama: formData.siswa.nama, kelas: formData.kelas, status: formData.status, lokasi: formData.lokasi, keterangan: document.getElementById('inputKeterangan').value };
-            presensiData.push({ id, siswaId: formData.siswa.id, siswaNama: formData.siswa.nama, kelas: formData.kelas, tanggal: formData.tanggal, waktu: formData.waktu, status: formData.status, lokasi: formData.lokasi, keterangan: dataToSend.keterangan, timestamp: new Date().toISOString() });
-            localStorage.setItem('presensiData', JSON.stringify(presensiData));
-            if(API_URL && API_URL !== 'MASUKKAN_URL_GOOGLE_SCRIPT_ANDA_DISINI') {
-                fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataToSend) })
-                .then(() => { console.log("Data terkirim"); nextStep(6); })
-                .catch(err => { console.error('Error:', err); alert("Gagal kirim server, simpan lokal."); nextStep(6); });
-            } else { alert("URL API belum diatur."); nextStep(6); }
+            const keterangan = formData.status === 'hadir' ? formData.lokasi : document.getElementById('inputKeterangan').value;
+            const dataToSend = { id: id, tanggal: formData.tanggal, waktu: formData.waktu, nama: formData.siswa.nama, kelas: formData.kelas, status: formData.status, keterangan: keterangan };
+
+            try {
+                await api('submitPresensi', { data: dataToSend }, 'POST');
+                document.getElementById('presensiId').textContent = id;
+                nextStep(6);
+                showToast('Presensi berhasil tercatat di server');
+            } catch (err) {
+                showToast(err.message || 'Gagal mengirim presensi', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
         }
 
         // ADMIN LOGIC
-        function initAdmin() { populateKelas(); loadDashboard(); loadPresensiData(); loadSiswaData(); loadKelasData(); }
-        function showAdminSection(sec) { document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); event.target.classList.add('active'); document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden')); document.getElementById('section'+sec.charAt(0).toUpperCase()+sec.slice(1)).classList.remove('hidden'); if(sec==='dashboard') loadDashboard(); if(sec==='presensi') loadPresensiData(); if(sec==='siswa') loadSiswaData(); if(sec==='kelas') loadKelasData(); }
-        function populateKelas() { ['filterKelas', 'addSiswaKelas'].forEach(id => { let el = document.getElementById(id); if(el) { el.innerHTML = '<option value="">Pilih Kelas</option>'; Object.keys(databaseSiswa).forEach(k => el.add(new Option(k, k))); } }); }
-        
-        function loadDashboard() {
-            let today = new Date().toISOString().split('T')[0];
-            let td = presensiData.filter(p => p.tanggal === today);
-            document.getElementById('statTotal').textContent = td.length;
-            document.getElementById('statHadir').textContent = td.filter(p=>p.status==='hadir').length;
-            document.getElementById('statIzin').textContent = td.filter(p=>p.status==='izin').length;
-            document.getElementById('statSakit').textContent = td.filter(p=>p.status==='sakit').length;
-            document.getElementById('statAlpha').textContent = td.filter(p=>p.status==='alpha').length;
-            document.getElementById('recentActivityBody').innerHTML = presensiData.slice(-5).reverse().map(p => `<tr><td>${p.waktu}</td><td>${p.siswaNama}</td><td><span class="badge badge-${p.status}">${p.status}</span></td></tr>`).join('');
+        async function initAdmin() { 
+            await populateKelas(); 
+            loadDashboard(); 
+            document.getElementById('filterTanggal').value = new Date().toISOString().split('T')[0];
         }
         
-        function loadPresensiData() {
+        function toggleSidebar() { document.getElementById('adminSidebar').classList.toggle('open'); }
+        
+        async function showAdminSection(sec) { 
+            document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); 
+            event.currentTarget.classList.add('active'); 
+            document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden')); 
+            document.getElementById('section'+sec.charAt(0).toUpperCase()+sec.slice(1)).classList.remove('hidden');
+            document.getElementById('adminSectionTitle').textContent = sec.charAt(0).toUpperCase() + sec.slice(1);
+            if(window.innerWidth <= 1024) document.getElementById('adminSidebar').classList.remove('open');
+            if(sec==='dashboard') loadDashboard(); 
+            if(sec==='presensi') loadPresensiData(); 
+            if(sec==='siswa') loadSiswaData(); 
+            if(sec==='kelas') loadKelasData(); 
+        }
+        
+        async function populateKelas() { 
+            try {
+                const result = await api('getKelas');
+                databaseSiswa = result.data;
+                let el = document.getElementById('addSiswaKelas');
+                el.innerHTML = '<option value="">Pilih Kelas</option>';
+                Object.keys(databaseSiswa).sort().forEach(k => el.add(new Option(k, k)));
+            } catch(err) {
+                console.error("Gagal memuat kelas");
+            }
+        }
+        
+        async function loadDashboard() {
+            let today = new Date().toISOString().split('T')[0];
+            try {
+                const result = await api('getPresensi', { tanggal: today });
+                const data = result.data || [];
+                document.getElementById('statTotal').textContent = data.length;
+                document.getElementById('statHadir').textContent = data.filter(p=>p.status==='hadir').length;
+                document.getElementById('statIzin').textContent = data.filter(p=>p.status==='izin').length;
+                document.getElementById('statSakit').textContent = data.filter(p=>p.status==='sakit').length;
+                document.getElementById('statAlpha').textContent = data.filter(p=>p.status==='alpha').length;
+                document.getElementById('recentActivityBody').innerHTML = data.slice(0, 5).map(p => `<tr><td>${p.waktu}</td><td>${p.siswaNama}</td><td><span class="badge badge-${p.status}">${p.status}</span></td></tr>`).join('') || '<tr><td colspan="3" class="text-center">Belum ada data</td></tr>';
+            } catch(err) {
+                console.error(err);
+            }
+        }
+        
+        async function loadPresensiData() {
             let tgl = document.getElementById('filterTanggal').value;
             let stat = document.getElementById('filterStatus').value;
-            let data = presensiData.filter(p => (!tgl || p.tanggal === tgl) && (!stat || p.status === stat)).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-            document.getElementById('presensiTableBody').innerHTML = data.map(p => `<tr><td>${p.id}</td><td>${p.tanggal}</td><td>${p.siswaNama}</td><td>${p.kelas}</td><td><span class="badge badge-${p.status}">${p.status}</span></td><td><button class="btn-danger btn-sm" onclick="deletePresensi('${p.id}')">Hapus</button></td></tr>`).join('');
-        }
-        function deletePresensi(id) { document.getElementById('confirmDeleteBtn').onclick = () => { presensiData = presensiData.filter(p => p.id !== id); localStorage.setItem('presensiData', JSON.stringify(presensiData)); closeModal('deleteModal'); loadPresensiData(); loadDashboard(); }; openModal('deleteModal'); }
+            
+            try {
+                const result = await api('getPresensi', { tanggal: tgl });
+                let data = result.data || [];
+                if(stat) data = data.filter(p => p.status === stat);
 
-        function loadSiswaData() {
+                document.getElementById('presensiTableBody').innerHTML = data.map(p => `
+                    <tr>
+                        <td>${p.id}</td><td>${p.tanggal}</td><td>${p.siswaNama}</td><td>${p.kelas}</td>
+                        <td><span class="badge badge-${p.status}">${p.status}</span></td>
+                        <td>${p.keterangan || '-'}</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <button class="btn-secondary btn-sm" onclick="editPresensi('${p.id}', '${p.status}', '${p.keterangan || ''}')">Edit</button>
+                                <button class="btn-danger btn-sm" onclick="deletePresensi('${p.id}')">Hapus</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('') || '<tr><td colspan="7" class="text-center">Tidak ada data</td></tr>';
+            } catch(err) {
+                showToast('Gagal memuat data presensi', 'error');
+            }
+        }
+
+        function editPresensi(id, status, ket) {
+            document.getElementById('editPresensiId').value = id;
+            document.getElementById('editPresensiStatus').value = status;
+            document.getElementById('editPresensiKeterangan').value = ket;
+            openModal('editPresensiModal');
+        }
+
+        async function saveEditPresensi() {
+            const id = document.getElementById('editPresensiId').value;
+            const status = document.getElementById('editPresensiStatus').value;
+            const keterangan = document.getElementById('editPresensiKeterangan').value;
+            const btn = document.getElementById('btnUpdatePresensi');
+            
+            btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                await api('updatePresensi', { id: id, status: status, keterangan: keterangan }, 'POST');
+                showToast('Data berhasil diperbarui');
+                closeModal('editPresensiModal');
+                loadPresensiData();
+                loadDashboard();
+            } catch(err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Simpan';
+            }
+        }
+        
+        async function deletePresensi(id) { 
+            document.getElementById('confirmDeleteBtn').onclick = async () => { 
+                try {
+                    await api('deletePresensi', { id: id }, 'POST');
+                    showToast('Data berhasil dihapus');
+                    closeModal('deleteModal'); 
+                    loadPresensiData(); 
+                    loadDashboard(); 
+                } catch(err) {
+                    showToast(err.message, 'error');
+                }
+            }; 
+            openModal('deleteModal'); 
+        }
+
+        async function loadSiswaData() {
             let src = document.getElementById('searchSiswa').value.toLowerCase();
-            let html = '';
-            Object.keys(databaseSiswa).forEach(k => {
-                databaseSiswa[k].forEach(s => {
-                    if(src && !s.nama.toLowerCase().includes(src)) return;
-                    html += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${k}</td><td><button class="btn-danger btn-sm" onclick="deleteSiswa('${s.id}', '${k}')">Hapus</button></td></tr>`;
+            document.getElementById('siswaTableBody').innerHTML = '<tr><td colspan="4">Memuat...</td></tr>';
+            try {
+                let allSiswa = [];
+                // Ambil semua kelas dulu
+                const kelasResult = await api('getKelas');
+                
+                // Loop setiap kelas untuk ambil siswanya
+                for(const k of Object.keys(kelasResult.data)) {
+                    const siswaResult = await api('getSiswa', { kelas: k });
+                    allSiswa = allSiswa.concat(siswaResult.data);
+                }
+
+                let html = '';
+                allSiswa.filter(s => !src || s.nama.toLowerCase().includes(src) || s.id.includes(src)).forEach(s => {
+                    html += `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.kelas}</td><td><button class="btn-danger btn-sm" onclick="deleteSiswa('${s.id}', '${s.kelas}')">Hapus</button></td></tr>`;
                 });
-            });
-            document.getElementById('siswaTableBody').innerHTML = html || '<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>';
+                document.getElementById('siswaTableBody').innerHTML = html || '<tr><td colspan="4" class="text-center">Tidak ada data</td></tr>';
+            } catch(err) {
+                console.error(err);
+            }
         }
-        function saveNewSiswa() {
-            let id = document.getElementById('addSiswaId').value;
-            let nama = document.getElementById('addSiswaNama').value;
+        
+        async function saveNewSiswa() {
+            let id = document.getElementById('addSiswaId').value.trim();
+            let nama = document.getElementById('addSiswaNama').value.trim();
             let kelas = document.getElementById('addSiswaKelas').value;
-            if(!id || !nama || !kelas) return alert('Lengkapi data');
-            if(!databaseSiswa[kelas]) databaseSiswa[kelas] = [];
-            databaseSiswa[kelas].push({id, nama});
-            localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
-            closeModal('addSiswaModal'); loadSiswaData(); populateKelas();
+            if(!id || !nama || !kelas) { showToast('Harap lengkapi semua data', 'error'); return; }
+            
+            const btn = document.getElementById('btnSaveSiswa');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                await api('addSiswa', { id: id, nama: nama, kelas: kelas }, 'POST');
+                showToast('Siswa berhasil ditambahkan');
+                closeModal('addSiswaModal'); loadSiswaData(); 
+                document.getElementById('addSiswaId').value = ''; document.getElementById('addSiswaNama').value = '';
+            } catch(err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Simpan';
+            }
         }
-        function deleteSiswa(id, kelas) {
-            document.getElementById('confirmDeleteBtn').onclick = () => {
-                databaseSiswa[kelas] = databaseSiswa[kelas].filter(s => s.id !== id);
-                localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
-                closeModal('deleteModal'); loadSiswaData();
+        
+        async function deleteSiswa(id, kelas) {
+            document.getElementById('confirmDeleteBtn').onclick = async () => {
+                try {
+                    await api('deleteSiswa', { id: id }, 'POST');
+                    showToast('Siswa berhasil dihapus');
+                    closeModal('deleteModal'); loadSiswaData();
+                } catch(err) {
+                    showToast(err.message, 'error');
+                }
             };
             openModal('deleteModal');
         }
 
-        function loadKelasData() {
-            document.getElementById('kelasTableBody').innerHTML = Object.keys(databaseSiswa).map(k => `<tr><td>${k}</td><td>${databaseSiswa[k].length}</td><td><button class="btn-danger btn-sm" onclick="deleteKelas('${k}')">Hapus</button></td></tr>`).join('');
+        async function loadKelasData() {
+            document.getElementById('kelasTableBody').innerHTML = '<tr><td colspan="3">Memuat...</td></tr>';
+            try {
+                const result = await api('getKelas');
+                const data = result.data;
+                // data adalah Object { "Kelas A": [...], "Kelas B": [...] }
+                document.getElementById('kelasTableBody').innerHTML = Object.keys(data).sort().map(k => `
+                    <tr><td>${k}</td><td>${data[k].length || 0}</td><td><button class="btn-danger btn-sm" onclick="deleteKelas('${k}')">Hapus</button></td></tr>
+                `).join('') || '<tr><td colspan="3" class="text-center">Tidak ada data</td></tr>';
+            } catch(err) {
+                console.error(err);
+            }
         }
-        function saveNewKelas() {
+        
+        async function saveNewKelas() {
             let nama = document.getElementById('addKelasNama').value.trim();
-            if(!nama) return alert('Nama wajib');
-            if(databaseSiswa[nama]) return alert('Sudah ada');
-            databaseSiswa[nama] = [];
-            localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
-            closeModal('addKelasModal'); loadKelasData(); populateKelas();
+            if(!nama) { showToast('Nama kelas wajib diisi', 'error'); return; }
+
+            const btn = document.getElementById('btnSaveKelas');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                await api('addKelas', { nama: nama }, 'POST');
+                showToast('Kelas berhasil ditambahkan');
+                closeModal('addKelasModal'); loadKelasData(); populateKelas();
+                document.getElementById('addKelasNama').value = '';
+            } catch(err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = 'Simpan';
+            }
         }
-        function deleteKelas(k) {
-            document.getElementById('confirmDeleteBtn').onclick = () => {
-                delete databaseSiswa[k];
-                localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
-                closeModal('deleteModal'); loadKelasData(); populateKelas();
+        
+        async function deleteKelas(k) {
+            document.getElementById('confirmDeleteBtn').onclick = async () => {
+                try {
+                    await api('deleteKelas', { nama: k }, 'POST');
+                    showToast('Kelas berhasil dihapus');
+                    closeModal('deleteModal'); loadKelasData(); populateKelas();
+                } catch(err) {
+                    showToast(err.message, 'error');
+                }
             };
             openModal('deleteModal');
         }
 
-        function handleImportFile(e) {
+        async function handleImportFile(e) {
             let file = e.target.files[0]; if(!file) return;
             let reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     let data = new Uint8Array(e.target.result);
                     let workbook = XLSX.read(data, {type: 'array'});
                     let sheet = workbook.Sheets[workbook.SheetNames[0]];
                     let json = XLSX.utils.sheet_to_json(sheet, {header:1});
+                    
+                    let payload = [];
                     json.slice(1).forEach(row => {
                         let id = String(row[0] || '').trim();
                         let nama = String(row[1] || '').trim();
                         let kelas = String(row[2] || '').trim();
-                        if(id && nama && kelas) {
-                            if(!databaseSiswa[kelas]) databaseSiswa[kelas] = [];
-                            if(!databaseSiswa[kelas].find(s => s.id === id)) databaseSiswa[kelas].push({id, nama});
-                        }
+                        if(id && nama && kelas) payload.push({id, nama, kelas});
                     });
-                    localStorage.setItem('databaseSiswa', JSON.stringify(databaseSiswa));
-                    alert('Import berhasil!');
-                    loadSiswaData(); loadKelasData(); populateKelas();
-                } catch(err) { console.error(err); alert('Format file salah'); }
+
+                    if(payload.length > 0) {
+                        await api('importSiswa', { data: payload }, 'POST');
+                        showToast('Import berhasil!');
+                        loadSiswaData(); loadKelasData();
+                    } else {
+                        showToast('Tidak ada data valid untuk diimport', 'warning');
+                    }
+                } catch(err) { 
+                    console.error(err); 
+                    showToast('Format file salah atau error server', 'error'); 
+                }
             };
             reader.readAsArrayBuffer(file);
+            e.target.value = '';
         }
 
-        function exportData(type) {
+        async function exportData(type) {
             let dari = document.getElementById('exportDari').value;
             let sampai = document.getElementById('exportSampai').value;
-            let data = presensiData.filter(p => (!dari || p.tanggal >= dari) && (!sampai || p.tanggal <= sampai));
-            if(type === 'pdf') {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                doc.text("Rekap Presensi", 14, 22);
-                doc.autoTable({ startY: 30, head: [['Tanggal', 'Nama', 'Kelas', 'Status']], body: data.map(p => [p.tanggal, p.siswaNama, p.kelas, p.status]) });
-                doc.save('rekap.pdf');
-            } else {
-                let csv = 'ID,Tanggal,Nama,Kelas,Status\n' + data.map(p => `${p.id},${p.tanggal},${p.siswaNama},${p.kelas},${p.status}`).join('\n');
-                let blob = new Blob([csv], {type: 'text/csv'});
-                let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data.csv'; a.click();
+            try {
+                const result = await api('getPresensi', {});
+                let data = result.data.filter(p => (!dari || p.tanggal >= dari) && (!sampai || p.tanggal <= sampai));
+
+                if(data.length === 0) { showToast('Tidak ada data', 'warning'); return; }
+
+                if(type === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    doc.text("Rekap Presensi SMK Handayani", 14, 22);
+                    doc.autoTable({ startY: 30, head: [['Tanggal', 'Nama', 'Kelas', 'Status', 'Keterangan']], body: data.map(p => [p.tanggal, p.siswaNama, p.kelas, p.status, p.keterangan || '-']) });
+                    doc.save('rekap_presensi.pdf');
+                } else {
+                    let csv = 'ID,Tanggal,Waktu,Nama,Kelas,Status,Keterangan\n' + data.map(p => `${p.id},${p.tanggal},${p.waktu},${p.siswaNama},${p.kelas},${p.status},"${p.keterangan || '-'}"`).join('\n');
+                    let blob = new Blob([csv], {type: 'text/csv'});
+                    let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data_presensi.csv'; a.click();
+                }
+            } catch(err) {
+                showToast('Gagal mengambil data', 'error');
             }
         }
-        function sendWhatsApp() {
-            let num = prompt("Masukkan nomor WA (628...)"); if(!num) return;
-            exportData('pdf');
-            setTimeout(() => { window.open(`https://wa.me/${num}?text=Lampiran%20Rekap%20Presensi`, '_blank'); }, 1000);
-        }
+        
+        function sendWhatsApp() { let num = prompt("Masukkan nomor WA (format 628...)"); if(!num) return; exportData('pdf'); setTimeout(() => { window.open(`https://wa.me/${num}?text=Lampiran%20Rekap%20Presensi%20SMK%20Handayani`, '_blank'); }, 500); }
 
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
