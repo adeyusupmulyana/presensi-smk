@@ -5,323 +5,1223 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Presensi SMK Handayani</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        :root { --bg-primary: #0f172a; --bg-card: #1e293b; --fg-primary: #f8fafc; --fg-secondary: #94a3b8; --accent: #f97316; --border: #334155; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-primary); color: var(--fg-primary); }
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
-        .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; border: none; transition: 0.2s; }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-secondary { background: var(--border); color: var(--fg-primary); }
-        .input-field { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; margin-bottom: 12px; }
-        .hidden { display: none; }
-        .view { display: none; }
-        .view.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { color: var(--fg-secondary); font-size: 12px; }
+        :root {
+            --bg-primary: #0a0f1a; --bg-secondary: #111827; --bg-card: #1a2332;
+            --fg-primary: #f1f5f9; --fg-secondary: #94a3b8; --fg-muted: #64748b;
+            --accent: #f97316; --accent-glow: rgba(249, 115, 22, 0.3);
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --alpha: #6b7280;
+            --border: #2d3a4f;
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --fg-primary: #0f172a; --fg-secondary: #475569; --fg-muted: #94a3b8;
+            --border: #e2e8f0; --accent-glow: rgba(249, 115, 22, 0.2);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary); color: var(--fg-primary);
+            min-height: 100vh; overflow-x: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        
+        /* Background Effects */
+        .bg-mesh {
+            position: fixed; inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(249, 115, 22, 0.12), transparent);
+            pointer-events: none; z-index: 0;
+        }
+        .noise-overlay {
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 1;
+        }
+        .floating-particles { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+        .particle {
+            position: absolute; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; opacity: 0.3; animation: float 20s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; } 10% { opacity: 0.3; }
+            90% { opacity: 0.3; } 100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ==================== TRANSITIONS SYSTEM ==================== */
+        .view {
+            display: none;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .view.active {
+            display: block;
+            animation: viewIn 0.5s ease forwards;
+        }
+        .view.exit { animation: viewOut 0.3s ease forwards; }
+        @keyframes viewIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes viewOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.02); } }
+
+        .step {
+            display: none;
+            opacity: 0;
+            position: relative;
+        }
+        .step.active { display: block; animation: stepSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .step.exit-left { display: block; animation: stepSlideOutLeft 0.3s ease forwards; }
+        .step.exit-right { display: block; animation: stepSlideOutRight 0.3s ease forwards; }
+        .step.slide-back.active { animation-name: stepSlideInBack; }
+
+        @keyframes stepSlideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes stepSlideOutLeft { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-40px); } }
+        @keyframes stepSlideInBack { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes stepSlideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.5s;
+        }
+        
+        .btn-primary, .btn-secondary, .btn-danger {
+            position: relative; overflow: hidden;
+            font-weight: 600; padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer;
+            transition: all 0.3s ease; font-family: inherit; font-size: 14px;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--accent), #ea580c); color: white; box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-primary:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 30px var(--accent-glow); }
+        .btn-primary:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+        
+        .btn-secondary { background: var(--bg-secondary); color: var(--fg-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+        
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid transparent; }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255, 0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .ripple {
+            position: absolute; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0); animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-secondary); border: 2px solid var(--border);
+            border-radius: 12px; padding: 12px 16px; color: var(--fg-primary); font-size: 14px;
+            transition: all 0.3s ease; font-family: inherit;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+
+        .hidden { display: none !important; }
+        .sidebar {
+            width: 260px; background: var(--bg-card); border-right: 1px solid var(--border);
+            height: 100vh; position: fixed; left: 0; top: 0; z-index: 50;
+            transition: transform 0.3s ease, background 0.5s; overflow-y: auto; overflow-x: hidden;
+        }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+            color: var(--fg-secondary); cursor: pointer;
+            transition: all 0.2s ease; border-left: 3px solid transparent;
+        }
+        .sidebar-item:hover {
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--fg-primary);
+        }
+        .sidebar-item.active {
+            background: rgba(249, 115, 22, 0.15);
+            color: var(--accent);
+            border-left-color: var(--accent);
+        }
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh; padding: 24px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            color: var(--fg-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .data-table tr {
+            transition: background 0.2s;
+        }
+        .data-table tbody tr:hover {
+            background: rgba(249, 115, 22, 0.05);
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-alpha { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+
+        .status-option {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .status-option:hover {
+            border-color: var(--fg-muted);
+        }
+        .status-option.selected {
+            border-color: var(--accent);
+            background: rgba(249, 115, 22, 0.1);
+        }
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            transition: width 0.5s cubic-bezier(0.4, 0,0.2, 1);
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 20;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(15deg);
+            border-color: var(--accent);
+        }
+        
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toastIn 0.3s ease forwards;
+        }
+        .toast.toast-out {
+            animation: toastOut 0.3s ease forwards;
+        }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastOut { to { transform: translateX(100%); opacity: 0; } }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 55;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 60;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+            .theme-toggle {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
+    <div class="bg-mesh"></div>
+    <div class="noise-overlay"></div>
+    <div class="floating-particles" id="particles"></div>
 
-    <div id="toast" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hidden z-50"></div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeTogglePublic">
+        <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" class="hidden"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
 
     <!-- LOGIN VIEW -->
-    <div id="loginView" class="view active flex items-center justify-center min-h-screen">
-        <div class="w-full max-w-sm">
-            <div class="card text-center">
-                <h1 class="text-xl font-bold mb-4">Login Presensi</h1>
-                <select id="loginMode" class="input-field" onchange="toggleAdmin()">
-                    <option value="siswa">Siswa</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <div id="adminInputs" class="hidden">
-                    <input type="text" id="user" class="input-field" placeholder="Username">
-                    <input type="password" id="pass" class="input-field" placeholder="Password">
+    <div class="view active" id="loginView">
+        <main class="min-h-screen flex items-center justify-center p-4 relative z-10">
+            <div class="w-full max-w-md">
+                <div class="card p-8">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4" style="background: linear-gradient(135deg, var(--accent), #ea580c)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                        </div>
+                        <h1 class="font-display text-2xl font-bold mb-2">SMK Handayani Banjaran</h1>
+                        <p style="color: var(--fg-secondary)">Sistem Presensi Digital</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Mode Akses</label>
+                            <select class="input-field" id="loginMode">
+                                <option value="siswa">Siswa - Isi Presensi</option>
+                                <option value="admin">Admin - Kelola Data</option>
+                            </select>
+                        </div>
+                        <div id="adminLoginFields" class="space-y-4 hidden">
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Username</label>
+                                <input type="text" class="input-field" id="adminUsername" placeholder="Masukkan username">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Password</label>
+                                <input type="password" class="input-field" id="adminPassword" placeholder="Masukkan password">
+                            </div>
+                        </div>
+                        <button class="btn-primary w-full" onclick="handleLogin()">Masuk</button>
+                    </div>
                 </div>
-                <button class="btn btn-primary mt-4" onclick="handleLogin()">MASUK</button>
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- SISWA VIEW -->
-    <div id="siswaView" class="view max-w-lg mx-auto">
-        <div class="card">
-            <h2 class="font-bold mb-4">Pilih Kelas</h2>
-            <select id="kelasSelect" class="input-field"><option value="">Memuat...</option></select>
-            <button class="btn btn-primary mt-2" id="btnNextKelas" disabled onclick="loadSiswaStep()">Lanjut</button>
-        </div>
-        <div id="siswaStep" class="card hidden">
-            <h2 class="font-bold mb-4">Pilih Nama (<span id="labelKelas"></span>)</h2>
-            <select id="siswaSelect" class="input-field"><option value="">Pilih...</option></select>
-            <div class="flex gap-2">
-                <button class="btn btn-secondary" onclick="backToKelas()">Kembali</button>
-                <button class="btn btn-primary" id="btnNextSiswa" disabled onclick="loadStatusStep()">Lanjut</button>
+    <div class="view" id="siswaView">
+        <main class="min-h-screen flex items-center justify-center p-4 relative z-10">
+            <div class="w-full max-w-lg">
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-sm font-medium" style="color: var(--fg-secondary)">Langkah <span id="currentStep">1</span> dari 6</span>
+                        <span class="text-sm font-semibold" style="color: var(--accent)" id="progressPercent">17%</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 17%"></div></div>
+                </div>
+
+                <!-- Step 1: Pilih Kelas -->
+                <div class="step active" id="step1">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Pilih Kelas</h1></div>
+                        <div class="space-y-4">
+                            <select class="input-field" id="selectKelas"><option value="">Memuat data...</option></select>
+                            <button class="btn-primary w-full" onclick="nextStep(1)" id="btnStep1" disabled>Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Pilih Siswa -->
+                <div class="step" id="step2">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8">
+                            <h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Pilih Siswa</h1>
+                            <p style="color: var(--fg-secondary)">Kelas: <span id="selectedKelasLabel" class="font-semibold" style="color: var(--accent)"></span></p>
+                        </div>
+                        <div class="space-y-4">
+                            <select class="input-field" id="selectSiswa"><option value="">-- Pilih Siswa --</option></select>
+                            <div class="flex gap-3">
+                                <button class="btn-secondary flex-1" onclick="prevStep(1)">Kembali</button>
+                                <button class="btn-primary flex-1" onclick="nextStep(2)" id="btnStep2" disabled>Lanjutkan</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Konfirmasi Waktu -->
+                <div class="step" id="step3">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl sm:text-3xl font-bold mb-2">Konfirmasi Waktu</h1></div>
+                        <div class="space-y-4 mb-6">
+                            <div><label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Tanggal</label><input type="date" class="input-field" id="inputTanggal" readonly></div>
+                            <div><label class="block text-sm font-medium mb-2" style="color: var(--fg-secondary)">Waktu</label><input type="time" class="input-field" id="inputWaktu" readonly></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(2)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(3)">Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Status Kehadiran -->
+                <div class="step" id="step4">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Status Kehadiran</h1></div>
+                        <div class="space-y-3 mb-6">
+                            <div class="status-option" onclick="selectStatus('hadir')" data-status="hadir">
+                                <div class="status-icon" style="background: rgba(16, 185, 129, 0.2)">
+                                    <svg width="22" height="22" stroke="#10b981" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5"/></svg>
+                                </div>
+                                <div><div class="font-semibold">Hadir</div></div>
+                            </div>
+                            <div class="status-option" onclick="selectStatus('izin')" data-status="izin">
+                                <div class="status-icon" style="background: rgba(245, 158, 11, 0.2)">
+                                    <svg width="22" height="22" stroke="#f59e0b" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                                </div>
+                                <div><div class="font-semibold">Izin</div></div>
+                            </div>
+                            <div class="status-option" onclick="selectStatus('sakit')" data-status="sakit">
+                                <div class="status-icon" style="background: rgba(239, 68, 68, 0.2)">
+                                    <svg width="22" height="22" stroke="#ef4444" viewBox="0 0 24 24" fill="none"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="3"/></svg>
+                                </div>
+                                <div><div class="font-semibold">Sakit</div></div>
+                            </div>
+                            <div class="status-option" onclick="selectStatus('alpha')" data-status="alpha">
+                                <div class="status-icon" style="background: rgba(107, 114, 128, 0.2)">
+                                    <svg width="22" height="22" stroke="#6b7280" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/></svg>
+                                </div>
+                                <div><div class="font-semibold">Alpha</div></div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(3)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(4)" id="btnStep4" disabled>Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5a: Lokasi & Foto (Hadir) -->
+                <div class="step" id="step5a">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Lokasi & Foto</h1></div>
+                        <div class="space-y-4 mb-6">
+                            <div>
+                                <label class="block text-sm mb-2" style="color: var(--fg-secondary)">Lokasi</label>
+                                <div class="input-field flex items-center gap-3" style="background: var(--bg-card)">
+                                    <span id="locationText" style="color: var(--fg-secondary)">Mendapatkan lokasi...</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2" style="color: var(--fg-secondary)">Foto Selfie</label>
+                                <div style="background: var(--bg-secondary); border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 4/3; border: 1px solid var(--border);">
+                                    <video id="cameraVideo" autoplay playsinline style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
+                                    <img id="capturedPhoto" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                                    <div id="cameraOverlay" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3);">
+                                        <p style="color: white">Klik Buka Kamera</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 mt-4">
+                                    <button class="btn-secondary flex-1" onclick="startCamera()" id="btnStartCamera">Buka Kamera</button>
+                                    <button class="btn-primary flex-1" onclick="capturePhoto()" id="btnCapture" disabled>Ambil Foto</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(4)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(5)" id="btnStep5a" disabled>Selesai</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5b: Keterangan (Non-Hadir) -->
+                <div class="step" id="step5b">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Keterangan</h1></div>
+                        <div class="space-y-4 mb-6">
+                            <div><label class="block text-sm mb-2" style="color: var(--fg-secondary)">Keterangan</label><textarea class="input-field" id="inputKeterangan" rows="3" placeholder="Tuliskan alasan..."></textarea></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="prevStep(4)">Kembali</button>
+                            <button class="btn-primary flex-1" onclick="nextStep(5)">Selesai</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Rekap -->
+                <div class="step" id="step6">
+                    <div class="card p-6 sm:p-8">
+                        <div class="text-center mb-8"><h1 class="font-display text-2xl font-bold mb-2">Rekap Presensi</h1></div>
+                        <div class="mb-6" id="recapContainer"></div>
+                        <div class="flex gap-3">
+                            <button class="btn-secondary flex-1" onclick="editData()">Ubah Data</button>
+                            <button class="btn-primary flex-1" onclick="submitPresensi()">Kirim Presensi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 7: Sukses -->
+                <div class="step" id="step7">
+                    <div class="card p-6 sm:p-8 text-center">
+                        <div class="w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center" style="background: linear-gradient(135deg, var(--success), #059669)">
+                            <svg width="48" height="48" stroke="white" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5"/></svg>
+                        </div>
+                        <h1 class="font-display text-2xl font-bold mb-2">Presensi Berhasil</h1>
+                        <p style="color: var(--fg-secondary)" class="mb-6">ID: <span id="presensiId"></span></p>
+                        <button class="btn-primary w-full" onclick="resetForm()">Presensi Baru</button>
+                        <button class="btn-secondary w-full mt-3" onclick="logout()">Keluar</button>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div id="statusStep" class="card hidden">
-            <h2 class="font-bold mb-4">Status</h2>
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <button class="btn btn-secondary" onclick="setStatus('hadir')">Hadir</button>
-                <button class="btn btn-secondary" onclick="setStatus('izin')">Izin</button>
-                <button class="btn btn-secondary" onclick="setStatus('sakit')">Sakit</button>
-                <button class="btn btn-secondary" onclick="setStatus('alpha')">Alpha</button>
-            </div>
-            <textarea id="ketField" class="input-field hidden" placeholder="Keterangan (opsional)"></textarea>
-            <button class="btn btn-primary" id="btnSubmit" disabled onclick="submitPresensi()">KIRIM PRESENSI</button>
-        </div>
+        </main>
     </div>
 
     <!-- ADMIN VIEW -->
-    <div id="adminView" class="view">
-        <div class="flex flex-col md:flex-row gap-4">
-            <aside class="w-full md:w-64 bg-slate-800 p-4 rounded-xl h-fit">
-                <h2 class="font-bold text-lg mb-4">Admin Panel</h2>
-                <nav class="space-y-2">
-                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="showAdmin('dash')">Dashboard</div>
-                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="showAdmin('kelas')">Kelas</div>
-                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="showAdmin('siswa')">Siswa</div>
-                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="logout()">Keluar</div>
-                </nav>
-            </aside>
-            <main class="flex-1">
-                <div id="secDash" class="card">
-                    <h2 class="font-bold text-xl mb-4">Rekap Hari Ini</h2>
-                    <div class="grid grid-cols-4 gap-4 text-center">
-                        <div><div class="text-2xl font-bold text-green-500" id="sHadir">0</div><div class="text-xs text-gray-400">Hadir</div></div>
-                        <div><div class="text-2xl font-bold text-yellow-500" id="sIzin">0</div><div class="text-xs text-gray-400">Izin</div></div>
-                        <div><div class="text-2xl font-bold text-red-500" id="sSakit">0</div><div class="text-xs text-gray-400">Sakit</div></div>
-                        <div><div class="text-2xl font-bold text-gray-500" id="sAlpha">0</div><div class="text-xs text-gray-400">Alpha</div></div>
+    <div class="view" id="adminView">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+
+        <aside class="sidebar" id="adminSidebar">
+            <div class="p-5 border-b flex justify-between items-center" style="border-color: var(--border)">
+                <h2 class="font-bold">Admin Panel</h2>
+                <button class="lg:hidden" onclick="toggleSidebar()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <nav class="py-4">
+                <div class="sidebar-item active" onclick="showAdminSection('dashboard')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </div>
+                <div class="sidebar-item" onclick="showAdminSection('presensi')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Data Presensi</span>
+                </div>
+                <div class="sidebar-item" onclick="showAdminSection('siswa')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Data Siswa</span>
+                </div>
+                <div class="sidebar-item" onclick="showAdminSection('kelas')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <span>Data Kelas</span>
+                </div>
+                <div class="sidebar-item" onclick="showAdminSection('export')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>Export Data</span>
+                </div>
+            </nav>
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t" style="border-color: var(--border)">
+                <button class="btn-secondary w-full" onclick="logout()">Kelular</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <h1 class="font-display text-xl font-bold mb-6" id="adminSectionTitle">Dashboard</h1>
+
+            <section id="sectionDashboard" class="admin-section">
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    <div class="card p-5">
+                        <div class="text-2xl font-bold" id="statTotal">0</div>
+                        <div class="text-sm" style="color: var(--fg-secondary)">Total</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="text-2xl font-bold" style="color: var(--success)" id="statHadir">0</div>
+                        <div class="text-sm" style="color: var(--fg-secondary)">Hadir</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="text-2xl font-bold" style="color: var(--warning)" id="statIzin">0</div>
+                        <div class="text-sm" style="color: var(--fg-secondary)">Izin</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="text-2xl font-bold" style="color: var(--danger)" id="statSakit">0</div>
+                        <div class="text-sm" style="color: var(--fg-secondary)">Sakit</div>
+                    </div>
+                    <div class="card p-5">
+                        <div class="text-2xl font-bold" style="color: var(--alpha)" id="statAlpha">0</div>
+                        <div class="text-sm" style="color: var(--fg-secondary)">Alpha</div>
                     </div>
                 </div>
-                <div id="secKelas" class="card hidden">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="font-bold text-xl">Data Kelas</h2>
-                        <button class="btn btn-primary w-auto text-sm" onclick="tambahKelas()">+ Tambah</button>
+                <div class="card p-5">
+                    <h3 class="font-semibold mb-4">Aktivitas Terbaru</h3>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Nama</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityBody"></tbody>
+                        </table>
                     </div>
-                    <div id="listKelas">Memuat...</div>
                 </div>
-                <div id="secSiswa" class="card hidden">
-                    <h2 class="font-bold text-xl mb-4">Data Siswa</h2>
-                    <div class="flex gap-2 mb-4">
-                        <select id="filterKelas" class="input-field" style="width:auto"><option value="">Semua Kelas</option></select>
-                        <input type="text" id="cariSiswa" class="input-field" placeholder="Cari nama..." onchange="loadSiswaAdmin()">
+            </section>
+
+            <section id="sectionPresensi" class="admin-section hidden">
+                <div class="card p-5">
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <input type="date" class="input-field" id="filterTanggal" oninput="loadPresensiData()">
+                        <select class="input-field" id="filterStatus" onchange="loadPresensiData()">
+                            <option value="">Semua Status</option>
+                            <option value="hadir">Hadir</option>
+                            <option value="izin">Izin</option>
+                            <option value="sakit">Sakit</option>
+                            <option value="alpha">Alpha</option>
+                        </select>
                     </div>
-                    <div id="listSiswa">Memuat...</div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tanggal</th>
+                                    <th>Nama</th>
+                                    <th>Kelas</th>
+                                    <th>Status</th>
+                                    <th>Keterangan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="presensiTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
-            </main>
+            </section>
+
+            <section id="sectionSiswa" class="admin-section hidden">
+                <div class="card p-5">
+                    <div class="flex flex-wrap justify-between gap-3 mb-4">
+                        <input type="text" class="input-field" style="max-width: 200px" placeholder="Cari..." id="searchSiswa" oninput="loadSiswaData()">
+                        <div class="flex gap-2">
+                                <button class="btn-secondary" onclick="document.getElementById('importFile').click()">Import Excel</button>
+                                <input type="file" id="importFile" class="hidden" accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)">
+                                <button class="btn-primary" onclick="openModal('addSiswaModal')">+ Tambah</button>
+                            </div>
+                        </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama</th>
+                                    <th>Kelas</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="siswaTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sectionKelas" class="admin-section hidden">
+                <div class="card p-5">
+                    <div class="flex justify-between mb-4">
+                        <h3 class="font-semibold">Daftar Kelas</h3>
+                        <button class="btn-primary" onclick="openModal('addKelasModal')">+ Tambah Kelas</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Kelas</th>
+                                    <th>Jumlah Siswa</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kelasTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sectionExport" class="admin-section hidden">
+                <div class="card p-5">
+                    <h3 class="font-semibold mb-4">Export & WhatsApp</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="text-sm" style="color: var(--fg-secondary)">Dari Tanggal</label>
+                            <input type="date" class="input-field mt-1" id="exportDari">
+                        </div>
+                        <div>
+                            <label class="text-sm" style="color: var(--fg-secondary)">Sampai Tanggal</label>
+                            <input type="date" class="input-field mt-1" id="exportSampai">
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="btn-primary" onclick="exportData('csv')">Export CSV</button>
+                        <button class="btn-primary" onclick="exportData('pdf')">Export PDF</button>
+                        <button class="btn-secondary" onclick="sendWhatsApp()">Kirim WA (PDF)</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="addSiswaModal">
+        <div class="modal-content">
+            <div class="p-5 border-b" style="border-color: var(--border)">
+                <h3 class="font-semibold">Tambah Siswa</h3>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="text" id="addSiswaId" class="input-field" placeholder="NIS/NIDN">
+                <input type="text" id="addSiswaNama" class="input-field" placeholder="Nama Lengkap">
+                <select id="addSiswaKelas" class="input-field">
+                    <option value="">Pilih Kelas</option>
+                </select>
+            </div>
+            <div class="p-5 border-t flex gap-3" style="border-color: var(--border)">
+                <button class="btn-secondary flex-1" onclick="closeModal('addSiswaModal')">Batal</button>
+                <button class="btn-primary flex-1" onclick="saveNewSiswa()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addKelasModal">
+        <div class="modal-content">
+            <div class="p-5 border-b" style="border-color: var(--border)">
+                <h3 class="font-semibold">Tambah Kelas</h3>
+            </div>
+            <div class="p-5">
+                <input type="text" id="addKelasNama" class="input-field" placeholder="Nama Kelas (cth: XII TKJ 1)">
+            </div>
+            <div class="p-5 border-t flex gap-3" style="border-color: var(--border)">
+                <button class="btn-secondary flex-1" onclick="closeModal('addKelasModal')">Batal</button>
+                <button class="btn-primary flex-1" onclick="saveNewKelas()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editPresensiModal">
+        <div class="modal-content">
+            <div class="p-5 border-b" style="border-color: var(--border)">
+                <h3 class="font-semibold">Edit Status Presensi</h3>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="editPresensiId">
+                <div>
+                    <label class="text-sm" style="color: var(--fg-secondary)">Status</label>
+                    <select id="editPresensiStatus" class="input-field mt-1">
+                        <option value="hadir">Hadir</option>
+                        <option value="izin">Izin</option>
+                        <option value="sakit">Sakit</option>
+                        <option value="alpha">Alpha</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm" style="color: var(--fg-secondary)">Keterangan</label>
+                    <textarea id="editPresensiKeterangan" class="input-field mt-1" rows="3" placeholder="Keterangan tambahan..."></textarea>
+                </div>
+            </div>
+            <div class="p-5 border-t flex gap-3" style="border-color: var(--border)">
+                <button class="btn-secondary flex-1" onclick="closeModal('editPresensiModal')">Batal</button>
+                <button class="btn-primary flex-1" onclick="saveEditPresensi()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="p-5 text-center">
+                <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(239, 68, 68, 0.1)">
+                    <svg width="32" height="32" stroke="var(--danger)" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                </div>
+                <h3 class="font-semibold mb-2">Hapus Data?</h3>
+                <p class="text-sm mb-4" style="color: var(--fg-secondary)">Tindakan ini tidak dapat dibatalkan.</p>
+                <div class="flex gap-3">
+                    <button class="btn-secondary flex-1" onclick="closeModal('deleteModal')">Batal</button>
+                    <button class="btn-danger flex-1" id="confirmDeleteBtn">Hapus</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // ================== KONFIGURASI ==================
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwsKdvgvZKuTaf3bX43XpXOP86rLOZpLT8thkJG547pFgohUlyXRhTqQmx0XYWBYMLJ/exec';
+        // ==========================================
+        // CONFIG & API
+        // ==========================================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwsKdvgvZKuTaf3bX43XpXOP86rLOZpLT8thkJG547pFgohUlyXRhTqQmx0XYWBYMLJ/exec'; 
 
-        let state = { kelas: {}, selectedKelas: '', selectedSiswa: null, status: '' };
+        // ==========================================
+        // GLOBAL STATE
+        // ==========================================
+        let databaseSiswa = {}; 
+        let presensiData = [];  
+        let appSettings = JSON.parse(localStorage.getItem('appSettings')) || { theme: 'dark' };
+        let formData = {}, currentStep=1, cameraStream=null, isAnimating=false;
 
-        // ================== UTILITY ==================
-        const $ = id => document.getElementById(id);
-        function toast(msg, err=false) { 
-            let t = $('toast'); 
-            t.textContent = msg; 
-            t.className = `fixed top-4 right-4 px-4 py-2 rounded z-50 ${err ? 'bg-red-500' : 'bg-green-500'} text-white`;
-            setTimeout(() => t.className = 'hidden', 5000);
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            applyTheme(appSettings.theme);
+            document.getElementById('loginMode').onchange = (e) => document.getElementById('adminLoginFields').classList.toggle('hidden', e.target.value === 'siswa');
+            initRipple();
+        });
+
+        // Helper: Toast Notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const colors = { success: '#10b981', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' };
+            toast.innerHTML = `<div style="width: 8px; height: 8px; border-radius: 50%; background: ${colors[type]};"></div><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // ================== API FUNCTIONS ==================
-        function apiGet(action, params = {}) {
-            return new Promise((resolve, reject) => {
-                const cbName = 'cb_' + Math.random().toString(36).substr(2, 9);
-                const script = document.createElement('script');
-                const query = new URLSearchParams({ action, callback: cbName, ...params, _t: Date.now() });
-                script.src = API_URL + '?' + query.toString();
-
-                window[cbName] = (data) => {
-                    delete window[cbName];
-                    if(document.body.contains(script)) document.body.removeChild(script);
-                    if (data.status === 'success') resolve(data);
-                    else reject(new Error(data.message || 'Error'));
-                };
-
-                script.onerror = () => {
-                    delete window[cbName];
-                    if(document.body.contains(script)) document.body.removeChild(script);
-                    reject(new Error('Koneksi gagal'));
-                };
-                document.body.appendChild(script);
-            });
-        }
-
-        async function apiPost(action, params = {}) {
+        // Helper: API Call
+        async function api(action, params = {}, method = 'GET') {
             try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action, ...params })
-                });
-                return { status: 'success' };
-            } catch (err) { throw err; }
+                let url = API_URL;
+                let options = { method: method };
+                
+                if (method === 'POST') {
+                    options.body = JSON.stringify({ action: action, ...params });
+                    options.headers = { 'Content-Type': 'text/plain;charset=utf-8' }; 
+                } else {
+                    const queryParams = new URLSearchParams({ action: action, ...params });
+                    url += '?' + queryParams.toString();
+                }
+
+                const response = await fetch(url, options);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    return result;
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan pada server');
+                }
+            } catch (err) {
+                console.error('API Error:', err);
+                throw err;
+            }
         }
 
-        // ================== VIEW SWITCHING ==================
-        function switchView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            $(id).classList.add('active');
-        }
+        // Visual Helpers
+        function createParticles() { const container = document.getElementById('particles'); container.innerHTML = ''; for(let i=0; i<15; i++) { let p=document.createElement('div'); p.className='particle'; p.style.left=Math.random()*100+'%'; p.style.animationDelay=Math.random()*5+'s'; container.appendChild(p); } }
+        function initRipple() { document.querySelectorAll('.btn-primary, .btn-secondary, .btn-danger').forEach(btn => { btn.addEventListener('click', function(e) { let ripple = document.createElement('span'); ripple.className = 'ripple'; let rect = this.getBoundingClientRect(); let size = Math.max(rect.width, rect.height); ripple.style.width = ripple.style.height = size + 'px'; ripple.style.left = e.clientX - rect.left - size/2 + 'px'; ripple.style.top = e.clientY - rect.top - size/2 + 'px'; this.appendChild(ripple); setTimeout(() => ripple.remove(), 600); }); }); }
+        function toggleTheme() { appSettings.theme = appSettings.theme === 'light' ? 'dark' : 'light'; applyTheme(appSettings.theme); localStorage.setItem('appSettings', JSON.stringify(appSettings)); }
+        function applyTheme(t) { if(t==='light') { document.body.setAttribute('data-theme', 'light'); document.getElementById('iconSun').classList.add('hidden'); document.getElementById('iconMoon').classList.remove('hidden'); } else { document.body.removeAttribute('data-theme'); document.getElementById('iconSun').classList.remove('hidden'); document.getElementById('iconMoon').classList.add('hidden'); } }
 
-        // ================== LOGIN FLOW ==================
-        function toggleAdmin() { $('adminInputs').classList.toggle('hidden', $('loginMode').value !== 'admin'); }
-        
+        // AUTH & VIEW SWITCHING
         function handleLogin() {
-            const mode = $('loginMode').value;
-            const user = $('user').value;
-            const pass = $('pass').value;
-
-            if (mode === 'admin') {
-                if (user === 'admin' && pass === 'admin123') {
-                    switchView('adminView'); initAdmin();
-                } else { toast('Login salah', true); }
-            } else { switchView('siswaView'); initSiswa(); }
-        }
-
-        function logout() { switchView('loginView'); location.reload(); }
-
-        // ================== SISWA LOGIC ==================
-        async function initSiswa() {
-            $('kelasSelect').innerHTML = '<option value="">Memuat data...</option>';
-            try {
-                const res = await apiGet('getKelas');
-                state.kelas = res.data;
-                let html = '<option value="">-- Pilih Kelas --</option>';
-                Object.keys(res.data).sort().forEach(k => html += `<option value="${k}">${k}</option>`);
-                $('kelasSelect').innerHTML = html;
-                $('kelasSelect').onchange = () => $('btnNextKelas').disabled = !$('kelasSelect').value;
-            } catch(e) { 
-                $('kelasSelect').innerHTML = '<option value="">Error: ' + e.message + '</option>';
-                toast('Error: ' + e.message, true); 
+            const mode = document.getElementById('loginMode').value;
+            if(mode === 'admin') {
+                const user = document.getElementById('adminUsername').value;
+                const pass = document.getElementById('adminPassword').value;
+                if(user === 'admin' && pass === 'admin123') {
+                    switchView('adminView');
+                } else showToast('Username atau password salah!', 'error');
+            } else {
+                switchView('siswaView');
             }
         }
+        function logout() { switchView('loginView'); }
+        
+        function switchView(targetId) {
+            const current = document.querySelector('.view.active');
+            const next = document.getElementById(targetId);
+            current.classList.remove('active');
+            next.classList.add('active');
+            if(targetId === 'adminView') { document.getElementById('themeTogglePublic').style.display = 'none'; initAdmin(); }
+            else if(targetId === 'siswaView') { document.getElementById('themeTogglePublic').style.display = 'flex'; initSiswa(); }
+            else { document.getElementById('themeTogglePublic').style.display = 'flex'; }
+        }
 
-        async function loadSiswaStep() {
-            state.selectedKelas = $('kelasSelect').value;
-            $('labelKelas').textContent = state.selectedKelas;
-            $('siswaStep').classList.remove('hidden');
-            $('siswaSelect').innerHTML = '<option value="">Memuat...</option>';
+        // SISWA LOGIC
+        async function initSiswa() { 
+            resetForm(); 
+            await loadKelasDataForSiswa(); 
+            updateDateTime(); 
+        }
+        
+        function resetForm() {
+            formData = {};
+            currentStep = 1;
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+        }
+
+        async function loadKelasDataForSiswa() {
+            const select = document.getElementById('selectKelas');
+            select.innerHTML = '<option value="">Memuat...</option>';
             try {
-                const res = await apiGet('getSiswa', { kelas: state.selectedKelas });
-                let html = '<option value="">-- Pilih Nama --</option>';
-                res.data.forEach(s => html += `<option value="${s.id}">${s.nama}</option>`);
-                $('siswaSelect').innerHTML = html;
-                $('siswaSelect').onchange = () => {
-                    state.selectedSiswa = res.data.find(s => s.id === $('siswaSelect').value);
-                    $('btnNextSiswa').disabled = !$('siswaSelect').value;
+                const result = await api('getKelas');
+                databaseSiswa = result.data;
+                select.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+                Object.keys(databaseSiswa).sort().forEach(k => select.add(new Option(k, k)));
+                select.onchange = function() { 
+                    formData.kelas = this.value; 
+                    loadSiswaDataForSiswa(this.value); 
+                    document.getElementById('btnStep1').disabled = !this.value; 
                 };
-            } catch(e) { toast('Gagal memuat siswa', true); }
-        }
-        
-        function backToKelas() { $('siswaStep').classList.add('hidden'); }
-        function loadStatusStep() { $('statusStep').classList.remove('hidden'); }
-        
-        function setStatus(st) {
-            state.status = st;
-            $('ketField').classList.toggle('hidden', st === 'hadir');
-            $('btnSubmit').disabled = false;
-        }
-
-        async function submitPresensi() {
-            $('btnSubmit').disabled = true; $('btnSubmit').textContent = 'Mengirim...';
-            const data = {
-                id: 'PRSN' + Date.now(),
-                tanggal: new Date().toISOString().split('T')[0],
-                waktu: new Date().toTimeString().slice(0,5),
-                nama: state.selectedSiswa.nama,
-                kelas: state.selectedKelas,
-                status: state.status,
-                keterangan: $('ketField').value || '-'
-            };
-            try {
-                await apiPost('submitPresensi', { data: data });
-                toast('Presensi Berhasil!');
-                setTimeout(() => location.reload(), 1500);
-            } catch(e) {
-                toast('Gagal mengirim', true);
-                $('btnSubmit').disabled = false; $('btnSubmit').textContent = 'KIRIM PRESENSI';
+            } catch (err) {
+                select.innerHTML = '<option value="">Gagal memuat</option>';
+                showToast('Gagal mengambil data kelas: ' + err.message, 'error');
             }
         }
 
-        // ================== ADMIN LOGIC ==================
-        async function initAdmin() { loadDashboard(); loadKelasAdmin(); }
+        async function loadSiswaDataForSiswa(kelas) {
+            const select = document.getElementById('selectSiswa');
+            select.innerHTML = '<option value="">Memuat...</option>';
+            try {
+                const result = await api('getSiswa', { kelas: kelas });
+                select.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+                result.data.sort((a,b) => a.nama.localeCompare(b.nama)).forEach(s => select.add(new Option(s.nama, s.id)));
+                select.onchange = function() { 
+                    formData.siswa = result.data.find(s => s.id === this.value); 
+                    document.getElementById('btnStep2').disabled = !this.value; 
+                };
+            } catch(err) {
+                select.innerHTML = '<option value="">Gagal</option>';
+            }
+        }
+        
+        function updateDateTime() { 
+            let now = new Date(); 
+            document.getElementById('inputTanggal').value = now.toISOString().split('T')[0]; 
+            document.getElementById('inputWaktu').value = now.toTimeString().slice(0,5); 
+        }
 
-        function showAdmin(id) {
-            document.querySelectorAll('[id^="sec"]').forEach(el => el.classList.add('hidden'));
-            $('sec' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden');
+        function selectStatus(status) { 
+            formData.status = status; 
+            document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected')); 
+            document.querySelector(`[data-status="${status}"]`).classList.add('selected'); 
+            document.getElementById('btnStep4').disabled = false; 
+        }
+
+        async function startCamera() { 
+            try { 
+                if(cameraStream) cameraStream.getTracks().forEach(t => t.stop()); 
+                cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}); 
+                let video = document.getElementById('cameraVideo'); 
+                video.srcObject = cameraStream; 
+                video.style.display = 'block'; 
+                document.getElementById('cameraOverlay').style.display = 'none'; 
+                document.getElementById('capturedPhoto').style.display = 'none'; 
+                document.getElementById('btnStartCamera').textContent = 'Ganti Kamera'; 
+                document.getElementById('btnCapture').disabled = false; 
+                document.getElementById('btnStep5a').disabled = true; 
+            } catch(e) { showToast('Gagal membuka kamera', 'error'); } 
+        }
+        function capturePhoto() { 
+            let video = document.getElementById('cameraVideo'); 
+            let photo = document.getElementById('capturedPhoto'); 
+            let canvas = document.createElement('canvas'); 
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight; 
+            canvas.getContext('2d').drawImage(video, 0, 0); 
+            photo.src = canvas.toDataURL('image/jpeg'); 
+            photo.style.display = 'block'; 
+            video.style.display = 'none'; 
+            formData.foto = photo.src; 
+            if(cameraStream) cameraStream.getTracks().forEach(t => t.stop()); 
+            document.getElementById('btnStep5a').disabled = false;
+        }
+        
+        // STEP NAVIGATION
+        function nextStep(from) { 
+            if(isAnimating) return; isAnimating = true; 
+            const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7']; 
+            let nextId; 
+            if(from===4) nextId = formData.status === 'hadir' ? 'step5a' : 'step5b'; 
+            else if(from===5) { showRecap(); nextId = 'step6'; } 
+            else nextId = steps[from]; 
+            document.getElementById(steps[from-1]).classList.remove('active'); 
+            document.getElementById(nextId).classList.add('active'); 
+            if(from===2) document.getElementById('selectedKelasLabel').textContent = formData.kelas; 
+            currentStep = from+1; 
+            updateProgress(); 
+            isAnimating = false; 
+        }
+        
+        function prevStep(to) { 
+            const steps = ['step1','step2','step3','step4','step5a','step5b','step6','step7']; 
+            document.getElementById(steps[currentStep-1]).classList.remove('active'); 
+            document.getElementById('step'+to).classList.add('active'); 
+            currentStep=to; 
+            updateProgress(); 
+        }
+        
+        function updateProgress() { 
+            let p = currentStep>5?6:currentStep; 
+            document.getElementById('progressFill').style.width = (p/6*100)+'%'; 
+            document.getElementById('progressPercent').textContent = Math.round(p/6*100)+'%'; 
+            document.getElementById('currentStep').textContent = p; 
+        }
+        
+        function showRecap() { 
+            let statusColors = {hadir:'var(--success)', izin:'var(--warning)', sakit:'var(--danger)', alpha:'var(--alpha)'}; 
+            let keterangan = formData.status === 'hadir' ? formData.lokasi : document.getElementById('inputKeterangan').value; 
+            document.getElementById('recapContainer').innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between py-2 border-b border-gray-700"><span class="text-gray-400">Nama</span><span class="font-semibold">${formData.siswa?.nama}</span></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700"><span class="text-gray-400">Kelas</span><span class="font-semibold">${formData.kelas}</span></div>
+                    <div class="flex justify-between py-2 border-b border-gray-700"><span class="text-gray-400">Status</span><span class="font-semibold" style="color:${statusColors[formData.status]}">${formData.status.toUpperCase()}</span></div>
+                </div>`; 
+        }
+        
+        function editData() { prevStep(1); }
+
+        // SUBMIT PRESENSI
+        async function submitPresensi() {
+            const id = 'PRSN-'+Date.now().toString(36).toUpperCase();
+            const keterangan = formData.status === 'hadir' ? 'Hadir' : document.getElementById('inputKeterangan').value;
+            const dataToSend = { id: id, tanggal: document.getElementById('inputTanggal').value, waktu: document.getElementById('inputWaktu').value, nama: formData.siswa.nama, kelas: formData.kelas, status: formData.status, keterangan: keterangan };
+
+            try {
+                await api('submitPresensi', { data: dataToSend }, 'POST');
+                document.getElementById('presensiId').textContent = id;
+                nextStep(6);
+                showToast('Presensi berhasil');
+            } catch (err) {
+                showToast('Gagal mengirim', 'error');
+            }
+        }
+
+        // ADMIN LOGIC
+        async function initAdmin() { 
+            await loadDashboard(); 
+            document.getElementById('filterTanggal').value = new Date().toISOString().split('T')[0];
+        }
+        
+        function toggleSidebar() { document.getElementById('adminSidebar').classList.toggle('open'); }
+        
+        async function showAdminSection(sec) { 
+            document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active')); 
+            event.currentTarget.classList.add('active'); 
+            document.querySelectorAll('.admin-section').forEach(s=>s.classList.add('hidden')); 
+            document.getElementById('section'+sec.charAt(0).toUpperCase()+sec.slice(1)).classList.remove('hidden');
+            if(window.innerWidth <= 1024) document.getElementById('adminSidebar').classList.remove('open');
+            if(sec==='dashboard') loadDashboard(); 
+            if(sec==='presensi') loadPresensiData(); 
+            if(sec==='siswa') loadSiswaData(); 
+            if(sec==='kelas') loadKelasData(); 
         }
 
         async function loadDashboard() {
+            let today = new Date().toISOString().split('T')[0];
             try {
-                const res = await apiGet('getPresensi', { tanggal: new Date().toISOString().split('T')[0] });
-                const d = res.data || [];
-                $('sHadir').textContent = d.filter(x=>x.status==='hadir').length;
-                $('sIzin').textContent = d.filter(x=>x.status==='izin').length;
-                $('sSakit').textContent = d.filter(x=>x.status==='sakit').length;
-                $('sAlpha').textContent = d.filter(x=>x.status==='alpha').length;
-            } catch(e) {}
+                const result = await api('getPresensi', { tanggal: today });
+                const data = result.data || [];
+                document.getElementById('statTotal').textContent = data.length;
+                document.getElementById('statHadir').textContent = data.filter(p=>p.status==='hadir').length;
+                document.getElementById('statIzin').textContent = data.filter(p=>p.status==='izin').length;
+                document.getElementById('statSakit').textContent = data.filter(p=>p.status==='sakit').length;
+                document.getElementById('statAlpha').textContent = data.filter(p=>p.status==='alpha').length;
+                document.getElementById('recentActivityBody').innerHTML = data.slice(0, 5).map(p => `<tr><td>${p.waktu}</td><td>${p.siswaNama}</td><td><span class="badge badge-${p.status}">${p.status}</span></td></tr>`).join('') || '<tr><td colspan="3" class="text-center">-</td></tr>';
+            } catch(err) { console.error(err); }
+        }
+        
+        async function loadPresensiData() {
+            let tgl = document.getElementById('filterTanggal').value;
+            try {
+                const result = await api('getPresensi', { tanggal: tgl });
+                let data = result.data || [];
+                document.getElementById('presensiTableBody').innerHTML = data.map(p => `<tr><td>${p.id}</td><td>${p.tanggal}</td><td>${p.siswaNama}</td><td>${p.kelas}</td><td><span class="badge badge-${p.status}">${p.status}</span></td><td>${p.keterangan || '-'}</td><td><button class="btn-danger btn-sm" onclick="deletePresensi('${p.id}')">Hapus</button></td></tr>`).join('') || '<tr><td colspan="7" class="text-center">-</td></tr>';
+            } catch(err) { showToast('Gagal memuat', 'error'); }
+        }
+        
+        async function deletePresensi(id) { 
+            if(!confirm("Hapus?")) return;
+            try {
+                await api('deletePresensi', { id: id }, 'POST');
+                showToast('Terhapus');
+                loadPresensiData(); loadDashboard(); 
+            } catch(err) { showToast('Gagal', 'error'); }
         }
 
-        async function loadKelasAdmin() {
+        async function loadSiswaData() {
             try {
-                const res = await apiGet('getKelas');
-                let html = '<table class="w-full text-sm"><thead><tr><th>Nama</th><th>Aksi</th></tr></thead><tbody>';
-                Object.keys(res.data).forEach(k => {
-                    html += `<tr><td class="p-2">${k}</td><td class="p-2"><button class="text-red-400 text-xs" onclick="hapusKelas('${k}')">Hapus</button></td></tr>`;
-                });
-                $('listKelas').innerHTML = html + '</tbody></table>';
-                
-                $('filterKelas').innerHTML = '<option value="">Semua</option>';
-                Object.keys(res.data).forEach(k => $('filterKelas').innerHTML += `<option value="${k}">${k}</option>`);
-                $('filterKelas').onchange = loadSiswaAdmin;
-                loadSiswaAdmin();
-            } catch(e) { $('listKelas').textContent = 'Error: ' + e.message; toast(e.message, true); }
-        }
-
-        async function loadSiswaAdmin() {
-            try {
-                const kls = $('filterKelas').value;
-                const cari = $('cariSiswa').value.toLowerCase();
-                let all = [];
-                if (kls) {
-                    const res = await apiGet('getSiswa', { kelas: kls });
-                    all = res.data;
-                } else {
-                    const r = await apiGet('getKelas');
-                    for(let k in r.data) {
-                        const s = await apiGet('getSiswa', { kelas: k });
-                        all = all.concat(s.data);
-                    }
+                const kelasResult = await api('getKelas');
+                let allSiswa = [];
+                for(const k of Object.keys(kelasResult.data)) {
+                    const siswaResult = await api('getSiswa', { kelas: k });
+                    allSiswa = allSiswa.concat(siswaResult.data);
                 }
-                let html = '<table class="w-full text-sm"><thead><tr><th>Nama</th><th>Kelas</th></tr></thead><tbody>';
-                all.filter(s => s.nama.toLowerCase().includes(cari)).forEach(s => {
-                    html += `<tr><td class="p-2">${s.nama}</td><td class="p-2">${s.kelas}</td></tr>`;
-                });
-                $('listSiswa').innerHTML = html + '</tbody></table>';
-            } catch(e) { $('listSiswa').textContent = 'Error memuat siswa'; }
+                document.getElementById('siswaTableBody').innerHTML = allSiswa.map(s => `<tr><td>${s.id}</td><td>${s.nama}</td><td>${s.kelas}</td><td><button class="btn-danger btn-sm" onclick="deleteSiswa('${s.id}')">Hapus</button></td></tr>`).join('') || '<tr><td colspan="4" class="text-center">-</td></tr>';
+            } catch(err) { console.error(err); }
+        }
+        
+        async function saveNewSiswa() {
+            let id = document.getElementById('addSiswaId').value.trim();
+            let nama = document.getElementById('addSiswaNama').value.trim();
+            let kelas = document.getElementById('addSiswaKelas').value;
+            if(!id || !nama || !kelas) { showToast('Lengkapi data', 'error'); return; }
+            try {
+                await api('addSiswa', { id: id, nama: nama, kelas: kelas }, 'POST');
+                showToast('Siswa ditambahkan');
+                closeModal('addSiswaModal'); loadSiswaData(); 
+            } catch(err) { showToast('Gagal', 'error'); }
+        }
+        
+        async function deleteSiswa(id) {
+            if(!confirm("Hapus?")) return;
+            try {
+                await api('deleteSiswa', { id: id }, 'POST');
+                showToast('Terhapus');
+                loadSiswaData();
+            } catch(err) { showToast('Gagal', 'error'); }
         }
 
-        async function tambahKelas() {
-            const nama = prompt("Nama Kelas Baru:");
-            if(!nama) return;
-            try { await apiPost('addKelas', { nama }); toast('Kelas Ditambahkan'); loadKelasAdmin(); } 
-            catch(e) { toast('Gagal', true); }
+        async function loadKelasData() {
+            try {
+                const result = await api('getKelas');
+                const data = result.data;
+                let el = document.getElementById('addSiswaKelas');
+                el.innerHTML = '<option value="">Pilih Kelas</option>';
+                Object.keys(data).sort().forEach(k => el.add(new Option(k, k)));
+                document.getElementById('kelasTableBody').innerHTML = Object.keys(data).sort().map(k => `<tr><td>${k}</td><td>${data[k].length || 0}</td><td><button class="btn-danger btn-sm" onclick="deleteKelas('${k}')">Hapus</button></td></tr>`).join('') || '<tr><td colspan="3" class="text-center">-</td></tr>';
+            } catch(err) { console.error(err); }
+        }
+        
+        async function saveNewKelas() {
+            let nama = document.getElementById('addKelasNama').value.trim();
+            if(!nama) { showToast('Nama wajib', 'error'); return; }
+            try {
+                await api('addKelas', { nama: nama }, 'POST');
+                showToast('Kelas ditambahkan');
+                closeModal('addKelasModal'); loadKelasData(); 
+            } catch(err) { showToast('Gagal', 'error'); }
+        }
+        
+        async function deleteKelas(k) {
+            if(!confirm("Hapus?")) return;
+            try {
+                await api('deleteKelas', { nama: k }, 'POST');
+                showToast('Terhapus');
+                loadKelasData();
+            } catch(err) { showToast('Gagal', 'error'); }
         }
 
-        async function hapusKelas(nama) {
-            if(!confirm("Hapus kelas " + nama + "?")) return;
-            try { await apiPost('deleteKelas', { nama: nama }); loadKelasAdmin(); } 
-            catch(e) { toast('Gagal menghapus', true); }
-        }
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
     </script>
 </body>
 </html>
