@@ -117,6 +117,7 @@
 
     <script>
         // ================== KONFIGURASI ==================
+        // PASTIKAN INI ADALAH LINK VERSI 9 ANDA
         const API_URL = 'https://script.google.com/macros/s/AKfycbwsKdvgvZKuTaf3bX43XpXOP86rLOZpLT8thkJG547pFgohUlyXRhTqQmx0XYWBYMLJ/exec';
 
         let state = { kelas: {}, selectedKelas: '', selectedSiswa: null, status: '' };
@@ -127,7 +128,7 @@
             let t = $('toast'); 
             t.textContent = msg; 
             t.className = `fixed top-4 right-4 px-4 py-2 rounded z-50 ${err ? 'bg-red-500' : 'bg-green-500'} text-white`;
-            setTimeout(() => t.className = 'hidden', 3000);
+            setTimeout(() => t.className = 'hidden', 5000); // Durasi 5 detik biar bisa dibaca
         }
 
         // ================== API FUNCTIONS ==================
@@ -212,12 +213,17 @@
                 const res = await apiGet('getKelas');
                 state.kelas = res.data;
                 let html = '<option value="">-- Pilih Kelas --</option>';
+                // Jika data kosong, cek apakah sheet benar
+                if (Object.keys(res.data).length === 0) {
+                     html = '<option value="">Data Kosong/Tidak Ada</option>';
+                }
                 Object.keys(res.data).sort().forEach(k => html += `<option value="${k}">${k}</option>`);
                 $('kelasSelect').innerHTML = html;
                 $('kelasSelect').onchange = () => $('btnNextKelas').disabled = !$('kelasSelect').value;
             } catch(e) { 
-                $('kelasSelect').innerHTML = '<option value="">Gagal memuat</option>';
-                toast('Gagal mengambil data kelas', true); 
+                $('kelasSelect').innerHTML = '<option value="">Error</option>';
+                // Pesan error dari script (misal: Sheet tidak ditemukan)
+                toast('Error: ' + e.message, true); 
             }
         }
 
@@ -291,7 +297,10 @@
                 $('sIzin').textContent = d.filter(x=>x.status==='izin').length;
                 $('sSakit').textContent = d.filter(x=>x.status==='sakit').length;
                 $('sAlpha').textContent = d.filter(x=>x.status==='alpha').length;
-            } catch(e) {}
+            } catch(e) {
+                // Jika error (misal sheet presensi belum ada), biarkan 0
+                console.log("Dashboard load error: ", e.message);
+            }
         }
 
         async function loadKelasAdmin() {
@@ -307,7 +316,10 @@
                 Object.keys(res.data).forEach(k => $('filterKelas').innerHTML += `<option value="${k}">${k}</option>`);
                 $('filterKelas').onchange = loadSiswaAdmin;
                 loadSiswaAdmin();
-            } catch(e) { $('listKelas').textContent = 'Error memuat data'; }
+            } catch(e) { 
+                $('listKelas').textContent = 'Error: ' + e.message; 
+                toast(e.message, true);
+            }
         }
 
         async function loadSiswaAdmin() {
@@ -332,7 +344,7 @@
                     html += `<tr><td class="p-2">${s.nama}</td><td class="p-2">${s.kelas}</td></tr>`;
                 });
                 $('listSiswa').innerHTML = html + '</tbody></table>';
-            } catch(e) { $('listSiswa').textContent = 'Error'; }
+            } catch(e) { $('listSiswa').textContent = 'Error memuat siswa'; }
         }
 
         async function tambahKelas() {
@@ -342,19 +354,16 @@
                 await apiPost('addKelas', { nama });
                 toast('Kelas Ditambahkan');
                 loadKelasAdmin();
-            } catch(e) { toast('Gagal', true); }
+            } catch(e) { toast('Gagal menambah kelas', true); }
         }
 
         async function hapusKelas(nama) {
             if(!confirm("Hapus kelas " + nama + "?")) return;
             try {
-                // PERBAIKAN: Mengirim parameter 'nama' yang benar
                 await apiPost('deleteKelas', { nama: nama });
                 loadKelasAdmin();
-            } catch(e) { toast('Gagal', true); }
+            } catch(e) { toast('Gagal menghapus', true); }
         }
     </script>
 </body>
 </html>
-
-
