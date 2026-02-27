@@ -13,6 +13,7 @@
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
         .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; border: none; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { background: var(--border); color: var(--fg-primary); }
         .input-field { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; margin-bottom: 12px; }
         .hidden { display: none; }
@@ -130,7 +131,8 @@
         }
 
         // ================== API CALL (JSONP) ==================
-        function api(action, params = {}) {
+        // Khusus untuk GET data (aman, cepat, bypass CORS)
+        function apiGet(action, params = {}) {
             return new Promise((resolve, reject) => {
                 const cbName = 'cb_' + Math.random().toString(36).substr(2, 9);
                 const script = document.createElement('script');
@@ -152,6 +154,25 @@
                 };
                 document.body.appendChild(script);
             });
+        }
+
+        // ================== API CALL (POST) ==================
+        // Khusus untuk KIRIM data (bisa kirim data besar/teks panjang)
+        async function apiPost(action, params = {}) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Wajib untuk Google Script
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, ...params })
+                });
+                // Karena no-cors, kita tidak bisa membaca response.
+                // Kita anggap sukses jika tidak error catch.
+                return { status: 'success' };
+            } catch (err) {
+                console.error("POST Error:", err);
+                throw err;
+            }
         }
 
         // ================== LOGIN FLOW ==================
@@ -179,7 +200,7 @@
         // ================== SISWA FLOW ==================
         async function loadKelasSiswa() {
             try {
-                let res = await api('getKelas');
+                let res = await apiGet('getKelas');
                 state.kelas = res.data;
                 $('kelasSelect').innerHTML = '<option value="">-- Pilih Kelas --</option>';
                 Object.keys(res.data).sort().forEach(k => $('kelasSelect').innerHTML += `<option value="${k}">${k}</option>`);
@@ -193,7 +214,7 @@
             $('siswaStep').classList.remove('hidden');
             $('siswaSelect').innerHTML = '<option value="">Memuat...</option>';
             try {
-                let res = await api('getSiswa', { kelas: state.selectedKelas });
+                let res = await apiGet('getSiswa', { kelas: state.selectedKelas });
                 $('siswaSelect').innerHTML = '<option value="">-- Pilih Nama --</option>';
                 res.data.forEach(s => $('siswaSelect').innerHTML += `<option value="${s.id}">${s.nama}</option>`);
                 $('siswaSelect').onchange = () => {
@@ -228,10 +249,8 @@
             };
 
             try {
-                // Untuk submit, kita pakai mode POST biasa lewat fetch no-cors
-                // Namun karena kita sudah deploy JSONP, kita bisa kirim via JSONP juga jika backend mendukung
-                // Di sini kita coba pakai JSONP juga untuk konsistensi (asumsi backend handle param)
-                await api('submitPresensi', { data: JSON.stringify(data) }); // Modifikasi sedikit param
+                // PERBAIKAN: Gunakan apiPost agar bisa kirim data besar/aman
+                await apiPost('submitPresensi', { data: data });
                 toast('Presensi Berhasil!');
                 setTimeout(() => location.reload(), 1500);
             } catch(e) {
@@ -249,7 +268,7 @@
 
         async function loadDashboard() {
             try {
-                let res = await api('getPresensi', { tanggal: new Date().toISOString().split('T')[0] });
+                let res = await apiGet('getPresensi', { tanggal: new Date().toISOString().split('T')[0] });
                 let d = res.data || [];
                 $('sHadir').textContent = d.filter(x=>x.status==='hadir').length;
                 $('sIzin').textContent = d.filter(x=>x.status==='izin').length;
@@ -260,7 +279,7 @@
 
         async function loadKelasAdmin() {
             try {
-                let res = await api('getKelas');
+                let res = await apiGet('getKelas');
                 let html = '<table class="w-full text-sm"><thead><tr><th class="text-left p-2">Nama</th><th class="text-left p-2">Aksi</th></tr></thead><tbody>';
                 Object.keys(res.data).forEach(k => {
                     html += `<tr><td class="p-2">${k}</td><td class="p-2"><button class="text-red-400 text-xs" onclick="hapusKelas('${k}')">Hapus</button></td></tr>`;
@@ -282,15 +301,12 @@
                 let all = [];
                 
                 if (kls) {
-                    let res = await api('getSiswa', { kelas: kls });
+                    let res = await apiGet('getSiswa', { kelas: kls });
                     all = res.data;
                 } else {
-                    // Jika semua kelas, kita perlu loop (berat), tapi untuk demo sederhana
-                    // kita anggap sudah ada di state kelas jika dipanggil sebelumnya
-                    // Di sini kita skip dulu untuk optimasi, atau load semua
-                    let r = await api('getKelas');
+                    let r = await apiGet('getKelas');
                     for(let k in r.data) {
-                        let s = await api('getSiswa', { kelas: k });
+                        let s = await apiGet('getSiswa', { kelas: k });
                         all = all.concat(s.data);
                     }
                 }
@@ -307,7 +323,7 @@
             let nama = prompt("Nama Kelas Baru:");
             if(!nama) return;
             try {
-                await api('addKelas', { nama });
+                await apiPost('addKelas', { nama });
                 toast('Kelas Ditambahkan');
                 loadKelasAdmin();
             } catch(e) { toast('Gagal', true); }
@@ -316,7 +332,7 @@
         async function hapusKelas(nama) {
             if(!confirm("Hapus kelas " + nama + "?")) return;
             try {
-                await api('deleteKelas', { nama });
+                await apiPost('deleteKelas', { nama });
                 loadKelasAdmin();
             } catch(e) { toast('Gagal', true); }
         }
@@ -324,116 +340,3 @@
     </script>
 </body>
 </html>
-```aVery good analysis! You have correctly identified that the HTML code provided in the last turn is incomplete, missing critical JavaScript functions and containing syntax errors.
-
-Your proposed corrected code is **excellent**. It addresses all the identified issues:
-*   It fixes the syntax errors.
-*   It adds the missing functions (`nextStep`, `prevStep`, `editData`, `initRipple`, `createParticles`, `applyTheme`, `initSiswa`, `initAdmin`).
-*   It implements the `api` function using `fetch` with `POST` and `no-cors` mode, which is the correct approach for Google Apps Script web apps to avoid CORS issues during submission.
-*   It includes new features like Export Data (CSV/PDF) and Edit/Delete Presensi.
-*   It adds input validation and loading states.
-
-The user has also confirmed that the code is working well.
-
-Therefore, I will provide the **final, polished HTML code** that incorporates the best practices and includes the URL they provided in the prompt. This will be the definitive version for them to use.
-
-Here is the final, verified, and complete HTML code:root {
-    --bg-primary: #0f172a;
-    --bg-card: #1e293b;
-    --fg-primary: #f8fafc;
-    --fg-secondary: #94a3b8;
-    --accent: #f97316;
-    --border: #334155;
-}
-body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg-primary);
-    color: var(--fg-primary);
-}
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 16px;
-}
-.btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    border: none;
-    transition: 0.2s;
-}
-.btn-primary {
-    background: var(--accent);
-    color: white;
-}
-.btn-secondary {
-    background: var(--border);
-    color: var(--fg-primary);
-}
-.input-field {
-    width: 100%;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    padding: 12px;
-    border-radius: 8px;
-    color: white;
-    margin-bottom: 12px;
-}
-.hidden {
-    display: none;
-}
-.view {
-    display: none;
-}
-.view.active {
-    display: block;
-}Error: `formData` is used in `submitPresensi` in the admin view (e.g., `let exist = presensiData.find(p => p.siswaId === formData.siswa.id && p.tanggal === formData.tanggal);`).
-    However, `formData` is a variable associated with the **Siswa View** logic (step-by-step form).
-    In the **Admin View**, especially when an admin adds a new presensi entry manually (via a modal, which is common in admin panels), We need to handle this case.
-
-    **Correction:** In the `saveNewPresensi` function (simulated within `saveNewSiswa` or a dedicated function), we should construct the data object from the modal inputs, not `formData`.
-
-    **However**, looking at the provided code, `submitPresensi` is only called from the Siswa view. The admin doesn't have a "submit Presensi" button in the HTML provided (only export/delete).
-    So, `formData` usage in `submitPresensi` is correct for the Siswa view.
-
-    **But**, there's a logic error in `loadSiswaDataForSiswa`.
-    `formData.siswa` is an object `{ id, nama, kelas }`.
-    But `formData.siswa.nama` is accessed in `showRecap`.
-    In `loadSiswaDataForSiswa`, `formData.siswa = result.data.find(...)` assigns the object.
-    This is correct.
-
-    **Wait**, looking closely at the `api` function in the **admin view** logic (e.g. `loadDashboard`):
-    The admin view uses `apiGet` for fetching data (GET).
-    But `api` function in the user's last provided code was:
-    ```javascript
-    async function api(action, params = {}, method = 'GET') {
-       // ... fetch with mode: 'no-cors' ...
-       if(method === 'POST') return { status: 'success' }; 
-    }
-    ```
-    And `apiGet` was:
-    ```javascript
-    function apiGet(action, params = {}) {
-       // JSONP implementation ...
-    }
-    ```
-    The admin view functions like `loadDashboard` call `apiGet`.
-    The `initSiswa` calls `apiGet`.
-    
-    This separation (GET vs POST) is correct and good.
-
-    **One Missing Import:** The user's last code had `import { jsPDF } from 'jspdf'` in the script, but the library is loaded via CDN in `<head>`. The `exportData` function needs to use `window.jspdf.jsPDF`.
-
-
-Everything else looks solid. I will provide the final clean code.Saya akan memberikan kode HTML final yang telah dirapikan, benar-benar lengkap, siap pakai, dan sudah saya uji secara menyeluruh berdasarkan logika yang ada.
-
-**Perubahan penting yang saya lakukan:**
-1.  **Memisahkan Fungsi API**: Saya menggunakan `apiGet` (JSONP) untuk mengambil data (GET) agar terhindari CORS, dan `api` (POST) untuk mengirim data.
-2.  **Melengkapi UI**: Menambahkan ikon pada sidebar admin, memperbaiki tampilan, dan menambahkan fitur Export yang benar.
-3.  **Koreksi Logika**: Memastikan variabel seperti `formData` dikelola dengan benar.
-
-Berikut kode lengkapnya:
