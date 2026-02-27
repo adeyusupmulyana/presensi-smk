@@ -348,7 +348,7 @@
         async function hapusKelas(nama) {
             if(!confirm("Hapus kelas " + nama + "?")) return;
             try {
-                // PERBAIKAN: Menggunakan parameter 'nama' yang benar
+                // PERBAIKAN: Mengirim parameter 'nama' yang benar
                 await apiPost('deleteKelas', { nama: nama });
                 loadKelasAdmin();
             } catch(e) { toast('Gagal', true); }
