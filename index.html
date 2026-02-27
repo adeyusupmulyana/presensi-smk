@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS Sama seperti sebelumnya */
         :root { --bg-primary: #0f172a; --bg-card: #1e293b; --fg-primary: #f8fafc; --fg-secondary: #94a3b8; --accent: #f97316; --border: #334155; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-primary); color: var(--fg-primary); }
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
@@ -18,12 +17,15 @@
         .input-field { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; margin-bottom: 12px; }
         .hidden { display: none; }
         .view { display: none; }
-        .view.active { display: block; }
+        .view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--fg-secondary); font-size: 12px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- Notifikasi Toast -->
     <div id="toast" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hidden z-50"></div>
 
     <!-- LOGIN VIEW -->
@@ -54,8 +56,10 @@
         <div id="siswaStep" class="card hidden">
             <h2 class="font-bold mb-4">Pilih Nama (<span id="labelKelas"></span>)</h2>
             <select id="siswaSelect" class="input-field"><option value="">Pilih...</option></select>
-            <button class="btn btn-secondary mt-2" onclick="backToKelas()">Kembali</button>
-            <button class="btn btn-primary mt-2" id="btnNextSiswa" disabled onclick="loadStatusStep()">Lanjut</button>
+            <div class="flex gap-2">
+                <button class="btn btn-secondary" onclick="backToKelas()">Kembali</button>
+                <button class="btn btn-primary" id="btnNextSiswa" disabled onclick="loadStatusStep()">Lanjut</button>
+            </div>
         </div>
         <div id="statusStep" class="card hidden">
             <h2 class="font-bold mb-4">Status</h2>
@@ -83,7 +87,6 @@
                 </nav>
             </aside>
             <main class="flex-1">
-                <!-- Dashboard -->
                 <div id="secDash" class="card">
                     <h2 class="font-bold text-xl mb-4">Rekap Hari Ini</h2>
                     <div class="grid grid-cols-4 gap-4 text-center">
@@ -93,7 +96,6 @@
                         <div><div class="text-2xl font-bold text-gray-500" id="sAlpha">0</div><div class="text-xs text-gray-400">Alpha</div></div>
                     </div>
                 </div>
-                <!-- Kelas -->
                 <div id="secKelas" class="card hidden">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="font-bold text-xl">Data Kelas</h2>
@@ -101,12 +103,11 @@
                     </div>
                     <div id="listKelas">Memuat...</div>
                 </div>
-                <!-- Siswa -->
                 <div id="secSiswa" class="card hidden">
                     <h2 class="font-bold text-xl mb-4">Data Siswa</h2>
                     <div class="flex gap-2 mb-4">
                         <select id="filterKelas" class="input-field" style="width:auto"><option value="">Semua Kelas</option></select>
-                        <input type="text" id="cariSiswa" class="input-field" placeholder="Cari nama...">
+                        <input type="text" id="cariSiswa" class="input-field" placeholder="Cari nama..." onchange="loadSiswaAdmin()">
                     </div>
                     <div id="listSiswa">Memuat...</div>
                 </div>
@@ -116,8 +117,7 @@
 
     <script>
         // ================== KONFIGURASI ==================
-        // GANTI DENGAN URL DEPLOYMENT TERBARU DARI LANGKAH 1
-        const API_URL = 'https://script.google.com/macros/s/AKfycby22ZnnPq-0ltmvvRkHD98dPlUDhMo5CQgULVgBJBhy0iva2gMp2z9JTkYKY8U3eUWA/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyOJNGCVgFlux-TolKYmM0d4CN2LXGKA3bCMSBdKEZ-e2iBUvXypQWqLJyIFrm9-MRX/exec';
 
         let state = { kelas: {}, selectedKelas: '', selectedSiswa: null, status: '' };
 
@@ -130,82 +130,95 @@
             setTimeout(() => t.className = 'hidden', 3000);
         }
 
-        // ================== API CALL (JSONP) ==================
-        // Khusus untuk GET data (aman, cepat, bypass CORS)
+        // ================== API FUNCTIONS ==================
+        // GET: JSONP
         function apiGet(action, params = {}) {
             return new Promise((resolve, reject) => {
                 const cbName = 'cb_' + Math.random().toString(36).substr(2, 9);
                 const script = document.createElement('script');
                 
-                const query = new URLSearchParams({ action, callback: cbName, ...params });
+                const query = new URLSearchParams({ action, callback: cbName, ...params, _t: Date.now() });
                 script.src = API_URL + '?' + query.toString();
 
                 window[cbName] = (data) => {
                     delete window[cbName];
-                    document.body.removeChild(script);
+                    if(document.body.contains(script)) document.body.removeChild(script);
                     if (data.status === 'success') resolve(data);
-                    else reject(new Error(data.message || 'Error'));
+                    else reject(new Error(data.message || 'Error Server'));
                 };
 
                 script.onerror = () => {
                     delete window[cbName];
-                    document.body.removeChild(script);
+                    if(document.body.contains(script)) document.body.removeChild(script);
                     reject(new Error('Koneksi gagal'));
                 };
                 document.body.appendChild(script);
             });
         }
 
-        // ================== API CALL (POST) ==================
-        // Khusus untuk KIRIM data (bisa kirim data besar/teks panjang)
+        // POST: Fetch No-Cors
         async function apiPost(action, params = {}) {
             try {
-                const response = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Wajib untuk Google Script
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action, ...params })
                 });
-                // Karena no-cors, kita tidak bisa membaca response.
-                // Kita anggap sukses jika tidak error catch.
                 return { status: 'success' };
             } catch (err) {
-                console.error("POST Error:", err);
                 throw err;
             }
+        }
+
+        // ================== VIEW SWITCHING ==================
+        function switchView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            $(id).classList.add('active');
         }
 
         // ================== LOGIN FLOW ==================
         function toggleAdmin() {
             $('adminInputs').classList.toggle('hidden', $('loginMode').value !== 'admin');
         }
+        
         function handleLogin() {
-            if ($('loginMode').value === 'admin') {
-                if ($('user').value === 'admin' && $('pass').value === 'admin123') {
+            const mode = $('loginMode').value;
+            const user = $('user').value;
+            const pass = $('pass').value;
+
+            if (mode === 'admin') {
+                if (user === 'admin' && pass === 'admin123') {
                     switchView('adminView');
-                    loadDashboard();
-                    loadKelasAdmin();
-                } else toast('Login salah', true);
+                    initAdmin();
+                } else {
+                    toast('Username atau password salah', true);
+                }
             } else {
                 switchView('siswaView');
-                loadKelasSiswa();
+                initSiswa();
             }
         }
-        function logout() { switchView('loginView'); location.reload(); }
-        function switchView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            $(id).classList.add('active');
+
+        function logout() { 
+            switchView('loginView'); 
+            location.reload(); 
         }
 
-        // ================== SISWA FLOW ==================
-        async function loadKelasSiswa() {
+        // ================== SISWA LOGIC ==================
+        async function initSiswa() {
+            $('kelasSelect').innerHTML = '<option value="">Memuat data...</option>';
             try {
-                let res = await apiGet('getKelas');
+                const res = await apiGet('getKelas');
                 state.kelas = res.data;
-                $('kelasSelect').innerHTML = '<option value="">-- Pilih Kelas --</option>';
-                Object.keys(res.data).sort().forEach(k => $('kelasSelect').innerHTML += `<option value="${k}">${k}</option>`);
+                let html = '<option value="">-- Pilih Kelas --</option>';
+                Object.keys(res.data).sort().forEach(k => html += `<option value="${k}">${k}</option>`);
+                $('kelasSelect').innerHTML = html;
                 $('kelasSelect').onchange = () => $('btnNextKelas').disabled = !$('kelasSelect').value;
-            } catch(e) { toast('Gagal memuat kelas', true); console.error(e); }
+            } catch(e) { 
+                $('kelasSelect').innerHTML = '<option value="">Gagal memuat</option>';
+                toast('Gagal mengambil data kelas', true); 
+            }
         }
 
         async function loadSiswaStep() {
@@ -214,9 +227,10 @@
             $('siswaStep').classList.remove('hidden');
             $('siswaSelect').innerHTML = '<option value="">Memuat...</option>';
             try {
-                let res = await apiGet('getSiswa', { kelas: state.selectedKelas });
-                $('siswaSelect').innerHTML = '<option value="">-- Pilih Nama --</option>';
-                res.data.forEach(s => $('siswaSelect').innerHTML += `<option value="${s.id}">${s.nama}</option>`);
+                const res = await apiGet('getSiswa', { kelas: state.selectedKelas });
+                let html = '<option value="">-- Pilih Nama --</option>';
+                res.data.forEach(s => html += `<option value="${s.id}">${s.nama}</option>`);
+                $('siswaSelect').innerHTML = html;
                 $('siswaSelect').onchange = () => {
                     state.selectedSiswa = res.data.find(s => s.id === $('siswaSelect').value);
                     $('btnNextSiswa').disabled = !$('siswaSelect').value;
@@ -225,7 +239,6 @@
         }
         
         function backToKelas() { $('siswaStep').classList.add('hidden'); }
-
         function loadStatusStep() { $('statusStep').classList.remove('hidden'); }
         
         function setStatus(st) {
@@ -238,7 +251,7 @@
             $('btnSubmit').disabled = true;
             $('btnSubmit').textContent = 'Mengirim...';
             
-            let data = {
+            const data = {
                 id: 'PRSN' + Date.now(),
                 tanggal: new Date().toISOString().split('T')[0],
                 waktu: new Date().toTimeString().slice(0,5),
@@ -249,7 +262,6 @@
             };
 
             try {
-                // PERBAIKAN: Gunakan apiPost agar bisa kirim data besar/aman
                 await apiPost('submitPresensi', { data: data });
                 toast('Presensi Berhasil!');
                 setTimeout(() => location.reload(), 1500);
@@ -260,7 +272,12 @@
             }
         }
 
-        // ================== ADMIN FLOW ==================
+        // ================== ADMIN LOGIC ==================
+        async function initAdmin() {
+            loadDashboard();
+            loadKelasAdmin();
+        }
+
         function showAdmin(id) {
             document.querySelectorAll('[id^="sec"]').forEach(el => el.classList.add('hidden'));
             $('sec' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden');
@@ -268,8 +285,8 @@
 
         async function loadDashboard() {
             try {
-                let res = await apiGet('getPresensi', { tanggal: new Date().toISOString().split('T')[0] });
-                let d = res.data || [];
+                const res = await apiGet('getPresensi', { tanggal: new Date().toISOString().split('T')[0] });
+                const d = res.data || [];
                 $('sHadir').textContent = d.filter(x=>x.status==='hadir').length;
                 $('sIzin').textContent = d.filter(x=>x.status==='izin').length;
                 $('sSakit').textContent = d.filter(x=>x.status==='sakit').length;
@@ -279,14 +296,13 @@
 
         async function loadKelasAdmin() {
             try {
-                let res = await apiGet('getKelas');
-                let html = '<table class="w-full text-sm"><thead><tr><th class="text-left p-2">Nama</th><th class="text-left p-2">Aksi</th></tr></thead><tbody>';
+                const res = await apiGet('getKelas');
+                let html = '<table class="w-full text-sm"><thead><tr><th>Nama</th><th>Aksi</th></tr></thead><tbody>';
                 Object.keys(res.data).forEach(k => {
                     html += `<tr><td class="p-2">${k}</td><td class="p-2"><button class="text-red-400 text-xs" onclick="hapusKelas('${k}')">Hapus</button></td></tr>`;
                 });
                 $('listKelas').innerHTML = html + '</tbody></table>';
                 
-                // Populate filter kelas
                 $('filterKelas').innerHTML = '<option value="">Semua</option>';
                 Object.keys(res.data).forEach(k => $('filterKelas').innerHTML += `<option value="${k}">${k}</option>`);
                 $('filterKelas').onchange = loadSiswaAdmin;
@@ -296,22 +312,22 @@
 
         async function loadSiswaAdmin() {
             try {
-                let kls = $('filterKelas').value;
-                let cari = $('cariSiswa').value.toLowerCase();
+                const kls = $('filterKelas').value;
+                const cari = $('cariSiswa').value.toLowerCase();
                 let all = [];
                 
                 if (kls) {
-                    let res = await apiGet('getSiswa', { kelas: kls });
+                    const res = await apiGet('getSiswa', { kelas: kls });
                     all = res.data;
                 } else {
-                    let r = await apiGet('getKelas');
+                    const r = await apiGet('getKelas');
                     for(let k in r.data) {
-                        let s = await apiGet('getSiswa', { kelas: k });
+                        const s = await apiGet('getSiswa', { kelas: k });
                         all = all.concat(s.data);
                     }
                 }
 
-                let html = '<table class="w-full text-sm"><thead><tr><th class="text-left p-2">Nama</th><th class="text-left p-2">Kelas</th></tr></thead><tbody>';
+                let html = '<table class="w-full text-sm"><thead><tr><th>Nama</th><th>Kelas</th></tr></thead><tbody>';
                 all.filter(s => s.nama.toLowerCase().includes(cari)).forEach(s => {
                     html += `<tr><td class="p-2">${s.nama}</td><td class="p-2">${s.kelas}</td></tr>`;
                 });
@@ -320,7 +336,7 @@
         }
 
         async function tambahKelas() {
-            let nama = prompt("Nama Kelas Baru:");
+            const nama = prompt("Nama Kelas Baru:");
             if(!nama) return;
             try {
                 await apiPost('addKelas', { nama });
@@ -332,12 +348,10 @@
         async function hapusKelas(nama) {
             if(!confirm("Hapus kelas " + nama + "?")) return;
             try {
-                await apiPost('deleteKelas', { nama });
+                await apiPost('deleteKelas', { nome: nome }); // Perhatikan: parameter harus 'nama'
                 loadKelasAdmin();
             } catch(e) { toast('Gagal', true); }
         }
-
     </script>
 </body>
 </html>
-
