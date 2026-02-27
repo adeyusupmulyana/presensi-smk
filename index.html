@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presensi SMK Handayani</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-primary: #0f172a; --bg-card: #1e293b; --fg-primary: #f8fafc; --fg-secondary: #94a3b8; --accent: #f97316; --border: #334155; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-primary); color: var(--fg-primary); }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+        .btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; border: none; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: var(--border); color: var(--fg-primary); }
+        .input-field { width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white; margin-bottom: 12px; }
+        .hidden { display: none; }
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--fg-secondary); font-size: 12px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="toast" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hidden z-50"></div>
+
+    <!-- LOGIN VIEW -->
+    <div id="loginView" class="view active flex items-center justify-center min-h-screen">
+        <div class="w-full max-w-sm">
+            <div class="card text-center">
+                <h1 class="text-xl font-bold mb-4">Login Presensi</h1>
+                <select id="loginMode" class="input-field" onchange="toggleAdmin()">
+                    <option value="siswa">Siswa</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <div id="adminInputs" class="hidden">
+                    <input type="text" id="user" class="input-field" placeholder="Username">
+                    <input type="password" id="pass" class="input-field" placeholder="Password">
+                </div>
+                <button class="btn btn-primary mt-4" onclick="handleLogin()">MASUK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SISWA VIEW -->
+    <div id="siswaView" class="view max-w-lg mx-auto">
+        <div class="card">
+            <h2 class="font-bold mb-4">Pilih Kelas</h2>
+            <select id="kelasSelect" class="input-field"><option value="">Memuat...</option></select>
+            <button class="btn btn-primary mt-2" id="btnNextKelas" disabled onclick="loadSiswaStep()">Lanjut</button>
+        </div>
+        <div id="siswaStep" class="card hidden">
+            <h2 class="font-bold mb-4">Pilih Nama (<span id="labelKelas"></span>)</h2>
+            <select id="siswaSelect" class="input-field"><option value="">Pilih...</option></select>
+            <div class="flex gap-2">
+                <button class="btn btn-secondary" onclick="backToKelas()">Kembali</button>
+                <button class="btn btn-primary" id="btnNextSiswa" disabled onclick="loadStatusStep()">Lanjut</button>
+            </div>
+        </div>
+        <div id="statusStep" class="card hidden">
+            <h2 class="font-bold mb-4">Status</h2>
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button class="btn btn-secondary" onclick="setStatus('hadir')">Hadir</button>
+                <button class="btn btn-secondary" onclick="setStatus('izin')">Izin</button>
+                <button class="btn btn-secondary" onclick="setStatus('sakit')">Sakit</button>
+                <button class="btn btn-secondary" onclick="setStatus('alpha')">Alpha</button>
+            </div>
+            <textarea id="ketField" class="input-field hidden" placeholder="Keterangan (opsional)"></textarea>
+            <button class="btn btn-primary" id="btnSubmit" disabled onclick="submitPresensi()">KIRIM PRESENSI</button>
+        </div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="adminView" class="view">
+        <div class="flex flex-col md:flex-row gap-4">
+            <aside class="w-full md:w-64 bg-slate-800 p-4 rounded-xl h-fit">
+                <h2 class="font-bold text-lg mb-4">Admin Panel</h2>
+                <nav class="space-y-2">
+                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="showAdmin('dash')">Dashboard</div>
+                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="showAdmin('kelas')">Kelas</div>
+                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="showAdmin('siswa')">Siswa</div>
+                    <div class="p-2 hover:bg-slate-700 rounded cursor-pointer" onclick="logout()">Keluar</div>
+                </nav>
+            </aside>
+            <main class="flex-1">
+                <div id="secDash" class="card">
+                    <h2 class="font-bold text-xl mb-4">Rekap Hari Ini</h2>
+                    <div class="grid grid-cols-4 gap-4 text-center">
+                        <div><div class="text-2xl font-bold text-green-500" id="sHadir">0</div><div class="text-xs text-gray-400">Hadir</div></div>
+                        <div><div class="text-2xl font-bold text-yellow-500" id="sIzin">0</div><div class="text-xs text-gray-400">Izin</div></div>
+                        <div><div class="text-2xl font-bold text-red-500" id="sSakit">0</div><div class="text-xs text-gray-400">Sakit</div></div>
+                        <div><div class="text-2xl font-bold text-gray-500" id="sAlpha">0</div><div class="text-xs text-gray-400">Alpha</div></div>
+                    </div>
+                </div>
+                <div id="secKelas" class="card hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-xl">Data Kelas</h2>
+                        <button class="btn btn-primary w-auto text-sm" onclick="tambahKelas()">+ Tambah</button>
+                    </div>
+                    <div id="listKelas">Memuat...</div>
+                </div>
+                <div id="secSiswa" class="card hidden">
+                    <h2 class="font-bold text-xl mb-4">Data Siswa</h2>
+                    <div class="flex gap-2 mb-4">
+                        <select id="filterKelas" class="input-field" style="width:auto"><option value="">Semua Kelas</option></select>
+                        <input type="text" id="cariSiswa" class="input-field" placeholder="Cari nama..." onchange="loadSiswaAdmin()">
+                    </div>
+                    <div id="listSiswa">Memuat...</div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ================== KONFIGURASI ==================
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwsKdvgvZKuTaf3bX43XpXOP86rLOZpLT8thkJG547pFgohUlyXRhTqQmx0XYWBYMLJ/exec';
+
+        let state = { kelas: {}, selectedKelas: '', selectedSiswa: null, status: '' };
+
+        // ================== UTILITY ==================
+        const $ = id => document.getElementById(id);
+        function toast(msg, err=false) { 
+            let t = $('toast'); 
+            t.textContent = msg; 
+            t.className = `fixed top-4 right-4 px-4 py-2 rounded z-50 ${err ? 'bg-red-500' : 'bg-green-500'} text-white`;
+            setTimeout(() => t.className = 'hidden', 5000);
+        }
+
+        // ================== API FUNCTIONS ==================
+        function apiGet(action, params = {}) {
+            return new Promise((resolve, reject) => {
+                const cbName = 'cb_' + Math.random().toString(36).substr(2, 9);
+                const script = document.createElement('script');
+                const query = new URLSearchParams({ action, callback: cbName, ...params, _t: Date.now() });
+                script.src = API_URL + '?' + query.toString();
+
+                window[cbName] = (data) => {
+                    delete window[cbName];
+                    if(document.body.contains(script)) document.body.removeChild(script);
+                    if (data.status === 'success') resolve(data);
+                    else reject(new Error(data.message || 'Error'));
+                };
+
+                script.onerror = () => {
+                    delete window[cbName];
+                    if(document.body.contains(script)) document.body.removeChild(script);
+                    reject(new Error('Koneksi gagal'));
+                };
+                document.body.appendChild(script);
+            });
+        }
+
+        async function apiPost(action, params = {}) {
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, ...params })
+                });
+                return { status: 'success' };
+            } catch (err) { throw err; }
+        }
+
+        // ================== VIEW SWITCHING ==================
+        function switchView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            $(id).classList.add('active');
+        }
+
+        // ================== LOGIN FLOW ==================
+        function toggleAdmin() { $('adminInputs').classList.toggle('hidden', $('loginMode').value !== 'admin'); }
+        
+        function handleLogin() {
+            const mode = $('loginMode').value;
+            const user = $('user').value;
+            const pass = $('pass').value;
+
+            if (mode === 'admin') {
+                if (user === 'admin' && pass === 'admin123') {
+                    switchView('adminView'); initAdmin();
+                } else { toast('Login salah', true); }
+            } else { switchView('siswaView'); initSiswa(); }
+        }
+
+        function logout() { switchView('loginView'); location.reload(); }
+
+        // ================== SISWA LOGIC ==================
+        async function initSiswa() {
+            $('kelasSelect').innerHTML = '<option value="">Memuat data...</option>';
+            try {
+                const res = await apiGet('getKelas');
+                state.kelas = res.data;
+                let html = '<option value="">-- Pilih Kelas --</option>';
+                Object.keys(res.data).sort().forEach(k => html += `<option value="${k}">${k}</option>`);
+                $('kelasSelect').innerHTML = html;
+                $('kelasSelect').onchange = () => $('btnNextKelas').disabled = !$('kelasSelect').value;
+            } catch(e) { 
+                $('kelasSelect').innerHTML = '<option value="">Error: ' + e.message + '</option>';
+                toast('Error: ' + e.message, true); 
+            }
+        }
+
+        async function loadSiswaStep() {
+            state.selectedKelas = $('kelasSelect').value;
+            $('labelKelas').textContent = state.selectedKelas;
+            $('siswaStep').classList.remove('hidden');
+            $('siswaSelect').innerHTML = '<option value="">Memuat...</option>';
+            try {
+                const res = await apiGet('getSiswa', { kelas: state.selectedKelas });
+                let html = '<option value="">-- Pilih Nama --</option>';
+                res.data.forEach(s => html += `<option value="${s.id}">${s.nama}</option>`);
+                $('siswaSelect').innerHTML = html;
+                $('siswaSelect').onchange = () => {
+                    state.selectedSiswa = res.data.find(s => s.id === $('siswaSelect').value);
+                    $('btnNextSiswa').disabled = !$('siswaSelect').value;
+                };
+            } catch(e) { toast('Gagal memuat siswa', true); }
+        }
+        
+        function backToKelas() { $('siswaStep').classList.add('hidden'); }
+        function loadStatusStep() { $('statusStep').classList.remove('hidden'); }
+        
+        function setStatus(st) {
+            state.status = st;
+            $('ketField').classList.toggle('hidden', st === 'hadir');
+            $('btnSubmit').disabled = false;
+        }
+
+        async function submitPresensi() {
+            $('btnSubmit').disabled = true; $('btnSubmit').textContent = 'Mengirim...';
+            const data = {
+                id: 'PRSN' + Date.now(),
+                tanggal: new Date().toISOString().split('T')[0],
+                waktu: new Date().toTimeString().slice(0,5),
+                nama: state.selectedSiswa.nama,
+                kelas: state.selectedKelas,
+                status: state.status,
+                keterangan: $('ketField').value || '-'
+            };
+            try {
+                await apiPost('submitPresensi', { data: data });
+                toast('Presensi Berhasil!');
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) {
+                toast('Gagal mengirim', true);
+                $('btnSubmit').disabled = false; $('btnSubmit').textContent = 'KIRIM PRESENSI';
+            }
+        }
+
+        // ================== ADMIN LOGIC ==================
+        async function initAdmin() { loadDashboard(); loadKelasAdmin(); }
+
+        function showAdmin(id) {
+            document.querySelectorAll('[id^="sec"]').forEach(el => el.classList.add('hidden'));
+            $('sec' + id.charAt(0).toUpperCase() + id.slice(1)).classList.remove('hidden');
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await apiGet('getPresensi', { tanggal: new Date().toISOString().split('T')[0] });
+                const d = res.data || [];
+                $('sHadir').textContent = d.filter(x=>x.status==='hadir').length;
+                $('sIzin').textContent = d.filter(x=>x.status==='izin').length;
+                $('sSakit').textContent = d.filter(x=>x.status==='sakit').length;
+                $('sAlpha').textContent = d.filter(x=>x.status==='alpha').length;
+            } catch(e) {}
+        }
+
+        async function loadKelasAdmin() {
+            try {
+                const res = await apiGet('getKelas');
+                let html = '<table class="w-full text-sm"><thead><tr><th>Nama</th><th>Aksi</th></tr></thead><tbody>';
+                Object.keys(res.data).forEach(k => {
+                    html += `<tr><td class="p-2">${k}</td><td class="p-2"><button class="text-red-400 text-xs" onclick="hapusKelas('${k}')">Hapus</button></td></tr>`;
+                });
+                $('listKelas').innerHTML = html + '</tbody></table>';
+                
+                $('filterKelas').innerHTML = '<option value="">Semua</option>';
+                Object.keys(res.data).forEach(k => $('filterKelas').innerHTML += `<option value="${k}">${k}</option>`);
+                $('filterKelas').onchange = loadSiswaAdmin;
+                loadSiswaAdmin();
+            } catch(e) { $('listKelas').textContent = 'Error: ' + e.message; toast(e.message, true); }
+        }
+
+        async function loadSiswaAdmin() {
+            try {
+                const kls = $('filterKelas').value;
+                const cari = $('cariSiswa').value.toLowerCase();
+                let all = [];
+                if (kls) {
+                    const res = await apiGet('getSiswa', { kelas: kls });
+                    all = res.data;
+                } else {
+                    const r = await apiGet('getKelas');
+                    for(let k in r.data) {
+                        const s = await apiGet('getSiswa', { kelas: k });
+                        all = all.concat(s.data);
+                    }
+                }
+                let html = '<table class="w-full text-sm"><thead><tr><th>Nama</th><th>Kelas</th></tr></thead><tbody>';
+                all.filter(s => s.nama.toLowerCase().includes(cari)).forEach(s => {
+                    html += `<tr><td class="p-2">${s.nama}</td><td class="p-2">${s.kelas}</td></tr>`;
+                });
+                $('listSiswa').innerHTML = html + '</tbody></table>';
+            } catch(e) { $('listSiswa').textContent = 'Error memuat siswa'; }
+        }
+
+        async function tambahKelas() {
+            const nama = prompt("Nama Kelas Baru:");
+            if(!nama) return;
+            try { await apiPost('addKelas', { nama }); toast('Kelas Ditambahkan'); loadKelasAdmin(); } 
+            catch(e) { toast('Gagal', true); }
+        }
+
+        async function hapusKelas(nama) {
+            if(!confirm("Hapus kelas " + nama + "?")) return;
+            try { await apiPost('deleteKelas', { nama: nama }); loadKelasAdmin(); } 
+            catch(e) { toast('Gagal menghapus', true); }
+        }
+    </script>
+</body>
+</html>
