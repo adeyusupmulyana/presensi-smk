@@ -484,18 +484,52 @@
         function showRecap() { let statusColors = {hadir:'var(--success)', izin:'var(--warning)', sakit:'var(--danger)', alpha:'var(--alpha)'}; let keterangan = formData.status === 'hadir' ? 'Lokasi OK' : document.getElementById('inputKeterangan').value; document.getElementById('recapContainer').innerHTML = `<div class="space-y-2"><div class="flex justify-between py-2 border-b border-gray-700"><span class="text-gray-400">Nama</span><span class="font-semibold">${formData.siswa?.nama}</span></div><div class="flex justify-between py-2 border-b border-gray-700"><span class="text-gray-400">Kelas</span><span class="font-semibold">${formData.kelas}</span></div><div class="flex justify-between py-2 border-b border-gray-700"><span class="text-gray-400">Status</span><span class="font-semibold" style="color:${statusColors[formData.status]}">${formData.status.toUpperCase()}</span></div></div>`; }
         function editData() { prevStep(1); }
 
-        // SUBMIT PRESENSI
-        async function submitPresensi() {
-            const id = 'PRSN-'+Date.now().toString(36).toUpperCase();
-            const keterangan = formData.status === 'hadir' ? 'Hadir' : document.getElementById('inputKeterangan').value;
-            const dataToSend = { id: id, tanggal: document.getElementById('inputTanggal').value, waktu: document.getElementById('inputWaktu').value, nama: formData.siswa.nama, kelas: formData.kelas, status: formData.status, keterangan: keterangan };
+       // SUBMIT PRESENSI
+async function submitPresensi() {
+    // Validasi data
+    if (!formData.siswa || !formData.siswa.nama || !formData.kelas || !formData.status) {
+        showToast('Data tidak lengkap!', true);
+        return;
+    }
 
-            try {
-                await api('submitPresensi', { data: dataToSend }, 'POST');
-                document.getElementById('presensiId').textContent = id; nextStep(6); showToast('Presensi berhasil');
-            } catch (err) { showToast('Gagal mengirim', 'error'); }
-        }
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.textContent = 'Mengirim...';
 
+    const id = 'PRSN-' + Date.now();
+    const keterangan = formData.status === 'hadir' ? 'Hadir' : document.getElementById('inputKeterangan').value;
+    
+    const dataToSend = { 
+        id: id, 
+        tanggal: document.getElementById('inputTanggal').value, 
+        waktu: document.getElementById('inputWaktu').value, 
+        nama: formData.siswa.nama, 
+        kelas: formData.kelas, 
+        status: formData.status, 
+        keterangan: keterangan || '-' 
+    };
+
+    try {
+        await api('submitPresensi', { data: dataToSend }, 'POST');
+        
+        // --- TAMBAHAN KODE DI BAWAH INI ---
+        
+        // 1. Tampilkan notifikasi sukses
+        showToast('Presensi Berhasil!', 'success');
+        
+        // 2. Kembali ke halaman utama (reload) setelah 2 detik (2000 milidetik)
+        setTimeout(() => {
+            location.reload(); 
+        }, 2000);
+        
+        // --- AKHIR TAMBAHAN KODE ---
+
+    } catch (err) {
+        showToast('Gagal mengirim', true);
+        btn.disabled = false;
+        btn.textContent = 'KIRIM PRESENSI';
+    }
+}
         // ==========================================
         // ADMIN LOGIC (PERBAIKAN TOTAL)
         // ==========================================
