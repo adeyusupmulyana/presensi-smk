@@ -434,7 +434,8 @@
         // CONFIG & API
         // ==========================================
         const API_URL = 'https://script.google.com/macros/s/AKfycbwsKdvgvZKuTaf3bX43XpXOP86rLOZpLT8thkJG547pFgohUlyXRhTqQmx0XYWBYMLJ/exec'; 
-
+        // TAMBAHKAN VARIABEL INI:
+        const STORAGE_KEY = 'presensi_tercatat';
         let databaseSiswa = {}; let presensiData = [];  
         let appSettings = JSON.parse(localStorage.getItem('appSettings')) || { theme: 'dark' };
         let formData = {}, currentStep=1, cameraStream=null, isAnimating=false;
@@ -486,12 +487,32 @@
 
        // SUBMIT PRESENSI
 async function submitPresensi() {
-    // Validasi data
+    // 1. Validasi Data Awal
     if (!formData.siswa || !formData.siswa.nama || !formData.kelas || !formData.status) {
         showToast('Data tidak lengkap!', true);
         return;
     }
 
+    // 2. CEK DOUBLE ABSEN (Batas 1x per hari)
+    const today = new Date().toISOString().split('T')[0];
+    const storedData = localStorage.getItem(STORAGE_KEY);
+    
+    // Jika ada data tersimpan
+    if (storedData) {
+        const parsed = JSON.parse(storedData);
+        // Jika ID Siswa sama DAN Tangganya sama -> TOLAK
+        if (parsed.idSiswa === formData.siswa.id && parsed.tanggal === today) {
+            showToast('Anda sudah presensi hari ini!', true);
+            
+            // Kunci tombol dan ubah teks agar jelas
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.textContent = 'SUDAH PRESENSI';
+            return; // Hentikan proses
+        }
+    }
+
+    // 3. Proses Kirim Data
     const btn = document.getElementById('btnSubmit');
     btn.disabled = true;
     btn.textContent = 'Mengirim...';
@@ -501,7 +522,7 @@ async function submitPresensi() {
     
     const dataToSend = { 
         id: id, 
-        tanggal: document.getElementById('inputTanggal').value, 
+        tanggal: today, 
         waktu: document.getElementById('inputWaktu').value, 
         nama: formData.siswa.nama, 
         kelas: formData.kelas, 
@@ -512,20 +533,21 @@ async function submitPresensi() {
     try {
         await api('submitPresensi', { data: dataToSend }, 'POST');
         
-        // --- TAMBAHAN KODE DI BAWAH INI ---
-        
-        // 1. Tampilkan notifikasi sukses
+        // 4. Catat ke Local Storage (Supaya tidak bisa presensi lagi hari ini)
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            idSiswa: formData.siswa.id,
+            tanggal: today
+        }));
+
+        // 5. Notifikasi & Kembali ke Halaman Utama
         showToast('Presensi Berhasil!', 'success');
         
-        // 2. Kembali ke halaman utama (reload) setelah 2 detik (2000 milidetik)
         setTimeout(() => {
-            location.reload(); 
+            location.reload(); // Reload akan otomatis kembali ke halaman login
         }, 2000);
-        
-        // --- AKHIR TAMBAHAN KODE ---
 
     } catch (err) {
-        showToast('Gagal mengirim', true);
+        showToast('Gagal mengirim, coba lagi', true);
         btn.disabled = false;
         btn.textContent = 'KIRIM PRESENSI';
     }
